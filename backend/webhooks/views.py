@@ -121,10 +121,9 @@ def ycloud_webhook(request):
                 agent.agent_type = ''
                 agent.agent_type_other = ''
                 agent.rera_number = ''
-                agent.save(update_fields=[
-                    'is_active', 'name', 'email',
-                    'agent_type', 'agent_type_other', 'rera_number',
-                ])
+                agent.is_profile_complete = False
+                agent.has_completed_first_action = False
+                agent.save()
 
             # Handle referral code for new agents
             if created and session.referral_code:
