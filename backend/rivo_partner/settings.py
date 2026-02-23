@@ -109,8 +109,10 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# CSRF — not needed for token-based API auth
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+# CSRF — trust frontend + backend's own origin (for admin)
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS + [
+    origin.rstrip('/') for origin in os.getenv('BACKEND_URL', 'http://localhost:8000').split(',')
+]
 
 # DRF
 REST_FRAMEWORK = {
