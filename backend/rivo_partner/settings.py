@@ -109,10 +109,16 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# CSRF — trust frontend + backend's own origin (for admin)
+# CSRF — trust frontend origins + auto-trust backend's own HTTPS origins
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS + [
-    origin.rstrip('/') for origin in os.getenv('BACKEND_URL', 'http://localhost:8000').split(',')
+    f'https://{host}' for host in ALLOWED_HOSTS if host != '*'
 ]
+# If ALLOWED_HOSTS is wildcard, trust all HTTPS origins in non-production
+if '*' in ALLOWED_HOSTS:
+    CSRF_TRUSTED_ORIGINS += [
+        'https://rivo-partners-backend-331738587654.asia-southeast1.run.app',
+        'http://localhost:8000',
+    ]
 
 # DRF
 REST_FRAMEWORK = {
