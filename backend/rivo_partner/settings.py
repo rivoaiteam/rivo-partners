@@ -108,6 +108,14 @@ CORS_ALLOW_HEADERS = [
     'origin',
     'x-requested-with',
 ]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 # CSRF — trust frontend origins + auto-trust backend's own HTTPS origins
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS + [
