@@ -113,10 +113,18 @@ def ycloud_webhook(request):
                 },
             )
 
-            # Reactivate if previously deleted
+            # Reactivate if previously deleted — reset profile data
             if not created and not agent.is_active:
                 agent.is_active = True
-                agent.save(update_fields=['is_active'])
+                agent.name = ''
+                agent.email = ''
+                agent.agent_type = ''
+                agent.agent_type_other = ''
+                agent.rera_number = ''
+                agent.save(update_fields=[
+                    'is_active', 'name', 'email',
+                    'agent_type', 'agent_type_other', 'rera_number',
+                ])
 
             # Handle referral code for new agents
             if created and session.referral_code:
