@@ -113,6 +113,11 @@ def ycloud_webhook(request):
                 },
             )
 
+            # Reactivate if previously deleted
+            if not created and not agent.is_active:
+                agent.is_active = True
+                agent.save(update_fields=['is_active'])
+
             # Handle referral code for new agents
             if created and session.referral_code:
                 try:
