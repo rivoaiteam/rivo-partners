@@ -95,6 +95,16 @@ CORS_ALLOWED_ORIGINS = [
     origin.rstrip('/') for origin in os.getenv('FRONTEND_URL', 'http://localhost:5173').split(',')
 ]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'authorization',
+    'content-type',
+    'origin',
+    'x-requested-with',
+]
+
+# CSRF — not needed for token-based API auth
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 # DRF
 REST_FRAMEWORK = {
