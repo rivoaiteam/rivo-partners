@@ -19,7 +19,6 @@ SEED_DATA = {
     ),
     'whatsapp_personal': ('https://wa.me/971545079577', 'WhatsApp personal deep link URL'),
     'whatsapp_business': ('https://wa.me/971545079577', 'WhatsApp Business deep link URL'),
-    'rivo_join_url': ('https://partner.rivo.ae/join', 'Base URL for agent referral join links'),
 }
 
 

@@ -18,7 +18,6 @@ DEFAULTS = {
     'referral_share_msg': "Hey, I'm using Rivo to earn mortgage commissions. Join: {url}",
     'whatsapp_personal': 'https://wa.me/971545079577',
     'whatsapp_business': 'https://wa.me/971545079577',
-    'rivo_join_url': 'https://partner.rivo.ae/join',
 }
 
 
