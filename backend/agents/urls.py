@@ -10,4 +10,6 @@ urlpatterns = [
     path('referral/<str:code>/', views.resolve_referral_code, name='agent-resolve-referral'),
     path('logout/', views.logout, name='agent-logout'),
     path('delete/', views.delete_account, name='agent-delete'),
+    path('connect-google/', views.connect_google, name='agent-connect-google'),
+    path('connect-outlook/', views.connect_outlook, name='agent-connect-outlook'),
 ]

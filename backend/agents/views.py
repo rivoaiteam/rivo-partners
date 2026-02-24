@@ -1,9 +1,12 @@
 import os
 import random
+import requests as http_requests
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 from agents.models import Agent, WhatsAppSession
 from agents.serializers import (
@@ -151,3 +154,79 @@ def delete_account(request):
     agent.device_token = ''
     agent.save(update_fields=['is_active', 'device_token'])
     return Response({'message': 'Account deleted.'})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def connect_google(request):
+    """Verify Google ID token and save email to agent profile."""
+    credential = request.data.get('credential', '')
+    if not credential:
+        return Response({'error': 'Missing credential.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    google_client_id = os.getenv('GOOGLE_CLIENT_ID', '')
+    if not google_client_id:
+        return Response({'error': 'Google OAuth not configured.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    try:
+        idinfo = id_token.verify_oauth2_token(credential, google_requests.Request(), google_client_id)
+        email = idinfo.get('email', '')
+        if not email:
+            return Response({'error': 'No email in Google token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        agent = request.user
+        agent.email = email
+        agent.save(update_fields=['email'])
+        return Response(AgentSerializer(agent).data)
+    except ValueError:
+        return Response({'error': 'Invalid Google token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def connect_outlook(request):
+    """Exchange Microsoft auth code for email and save to agent profile."""
+    code = request.data.get('code', '')
+    redirect_uri = request.data.get('redirect_uri', '')
+    if not code:
+        return Response({'error': 'Missing auth code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    client_id = os.getenv('MICROSOFT_CLIENT_ID', '')
+    client_secret = os.getenv('MICROSOFT_CLIENT_SECRET', '')
+    if not client_id or not client_secret:
+        return Response({'error': 'Microsoft OAuth not configured.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    try:
+        # Exchange auth code for token
+        token_response = http_requests.post(
+            'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+            data={
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'code': code,
+                'redirect_uri': redirect_uri,
+                'grant_type': 'authorization_code',
+                'scope': 'openid email profile',
+            },
+        )
+        token_data = token_response.json()
+        access_token = token_data.get('access_token')
+        if not access_token:
+            return Response({'error': 'Failed to get Microsoft token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get user profile
+        profile_response = http_requests.get(
+            'https://graph.microsoft.com/v1.0/me',
+            headers={'Authorization': f'Bearer {access_token}'},
+        )
+        profile = profile_response.json()
+        email = profile.get('mail') or profile.get('userPrincipalName', '')
+        if not email:
+            return Response({'error': 'No email from Microsoft.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        agent = request.user
+        agent.email = email
+        agent.save(update_fields=['email'])
+        return Response(AgentSerializer(agent).data)
+    except Exception:
+        return Response({'error': 'Microsoft auth failed.'}, status=status.HTTP_400_BAD_REQUEST)
