@@ -164,7 +164,9 @@ def delete_account(request):
     agent = request.user
     agent.is_active = False
     agent.device_token = ''
-    agent.save(update_fields=['is_active', 'device_token'])
+    agent.referred_by = None
+    agent.save(update_fields=['is_active', 'device_token', 'referred_by'])
+    WhatsAppSession.objects.filter(agent=agent).delete()
     logger.info(f'Account deleted: {agent.phone}')
     return Response({'message': 'Account deleted.'})
 
