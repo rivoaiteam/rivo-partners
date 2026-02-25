@@ -18,12 +18,11 @@ def process_disbursal_bonuses(client):
 
 
 def _process_new_agent_bonus(agent, client):
-    """Award bonus to agent for their first 3 disbursed deals."""
-    existing_count = NewAgentBonus.objects.filter(agent=agent).count()
-    if existing_count >= 3:
-        return  # Already got all 3 bonuses
-
+    """Award bonus to agent for their first N disbursed deals."""
     bonus_config = AppConfig.get_value('new_agent_bonuses', [1000, 750, 500])
+    existing_count = NewAgentBonus.objects.filter(agent=agent).count()
+    if existing_count >= len(bonus_config):
+        return
     deal_number = existing_count + 1
 
     if deal_number <= len(bonus_config):
@@ -37,12 +36,11 @@ def _process_new_agent_bonus(agent, client):
 
 
 def _process_referrer_bonus(referrer, triggered_by_agent, client):
-    """Award bonus to referrer on first 3 disbursals across their ENTIRE network."""
-    existing_count = ReferralBonus.objects.filter(referrer=referrer).count()
-    if existing_count >= 3:
-        return  # Already got all 3 bonuses
-
+    """Award bonus to referrer on first N disbursals across their ENTIRE network."""
     bonus_config = AppConfig.get_value('referrer_bonuses', [500, 500, 1000])
+    existing_count = ReferralBonus.objects.filter(referrer=referrer).count()
+    if existing_count >= len(bonus_config):
+        return
     deal_number = existing_count + 1
 
     if deal_number <= len(bonus_config):

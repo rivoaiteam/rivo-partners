@@ -15,6 +15,7 @@ from agents.serializers import (
     NetworkAgentSerializer,
 )
 from agents.services import generate_device_token
+from config.models import AppConfig
 from referrals.models import ReferralBonus
 from referrals.serializers import ReferralBonusSerializer
 
@@ -104,7 +105,9 @@ def network(request):
 
     bonuses = ReferralBonus.objects.filter(referrer=agent)
     total_bonuses_earned = sum(b.amount for b in bonuses)
-    bonuses_completed = bonuses.count() >= 3
+    bonus_config = AppConfig.get_value('referrer_bonuses', [500, 500, 1000])
+    max_bonuses = len(bonus_config)
+    bonuses_completed = bonuses.count() >= max_bonuses
 
     return Response({
         'agent_code': agent.agent_code,
@@ -114,7 +117,7 @@ def network(request):
         'bonus_summary': {
             'total_earned': total_bonuses_earned,
             'bonuses_count': bonuses.count(),
-            'max_bonuses': 3,
+            'max_bonuses': max_bonuses,
             'completed': bonuses_completed,
             'bonuses': ReferralBonusSerializer(bonuses, many=True).data,
         },
