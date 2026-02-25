@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from agents.models import Agent, WhatsAppSession
-from agents.services import generate_device_token
+from agents.services import generate_device_token, send_referral_signup_notification
 from clients.models import Client
 from webhooks.models import WebhookLog
 from referrals.services import process_disbursal_bonuses
@@ -156,6 +156,8 @@ def ycloud_webhook(request):
                     agent.referred_by = referrer
                     agent.save(update_fields=['referred_by'])
                     logger.info(f'Agent {phone} referred by {referrer.phone} (code: {session.referral_code})')
+                    # Notify referrer that their referral signed up
+                    send_referral_signup_notification(referrer, agent)
                 except Agent.DoesNotExist:
                     logger.warning(f'Referral code not found: {session.referral_code}')
 
