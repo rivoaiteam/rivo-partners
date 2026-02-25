@@ -13,7 +13,6 @@ DEFAULTS = {
     'commission_max_percent': 0.60,
     'avg_payout': 9000,
     'referrer_bonuses': [500, 500, 1000],
-    'new_agent_bonuses': [1000, 750, 500],
     'client_whatsapp_msg': '{agent_name} referred you as a client to Rivo for mortgage assistance. Our team will reach out to you within 30 minutes.',
     'referral_share_msg': "Hey, I'm using Rivo to earn mortgage commissions. Join: {url}",
     'whatsapp_personal': 'https://wa.me/971545079577',
