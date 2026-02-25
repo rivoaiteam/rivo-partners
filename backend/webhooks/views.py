@@ -1,3 +1,4 @@
+import logging
 import re
 from decimal import Decimal
 from rest_framework import status
@@ -10,6 +11,8 @@ from agents.services import generate_device_token
 from clients.models import Client
 from webhooks.models import WebhookLog
 from referrals.services import process_disbursal_bonuses
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
@@ -29,8 +32,11 @@ def crm_status_webhook(request):
     pipeline_status = request.data.get('pipeline_status', '').upper()
     mortgage_amount = request.data.get('mortgage_amount')
 
+    logger.info(f'CRM webhook received: lead_id={lead_id}, status={pipeline_status}')
+
     valid_statuses = ['SUBMITTED', 'CONTACTED', 'QUALIFIED', 'SUBMITTED_TO_BANK', 'PREAPPROVED', 'FOL_RECEIVED', 'DISBURSED', 'DECLINED']
     if pipeline_status not in valid_statuses:
+        logger.warning(f'CRM webhook invalid status: {pipeline_status}')
         log.error_message = f'Invalid status: {pipeline_status}'
         log.save(update_fields=['error_message'])
         return Response(
@@ -41,6 +47,7 @@ def crm_status_webhook(request):
     try:
         client = Client.objects.get(crm_lead_id=lead_id)
     except Client.DoesNotExist:
+        logger.warning(f'CRM webhook lead not found: {lead_id}')
         log.error_message = f'No client with crm_lead_id: {lead_id}'
         log.save(update_fields=['error_message'])
         return Response({'error': 'Lead not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -57,7 +64,10 @@ def crm_status_webhook(request):
 
     client.save()
 
+    logger.info(f'Client {client.client_name} status updated: {old_status} → {pipeline_status}')
+
     if pipeline_status == 'DISBURSED' and old_status != 'DISBURSED':
+        logger.info(f'Processing disbursal bonuses for client {client.client_name}')
         process_disbursal_bonuses(client)
 
     log.processed = True
@@ -80,6 +90,7 @@ def ycloud_webhook(request):
     )
 
     event_type = request.data.get('type', '')
+    logger.info(f'YCloud webhook received: type={event_type}')
 
     # Handle incoming WhatsApp message
     if event_type == 'whatsapp.inbound_message.received':
@@ -90,6 +101,8 @@ def ycloud_webhook(request):
         # Also handle plain text body
         if not text:
             text = wa_message.get('text', '') if isinstance(wa_message.get('text'), str) else ''
+
+        logger.info(f'YCloud message from {from_phone}: {text[:50]}')
 
         # Extract verification code from message: RIVO 123456
         match = re.search(r'RIVO\s*(\d{6})', text.upper())
@@ -102,6 +115,7 @@ def ycloud_webhook(request):
                     is_verified=False,
                 )
             except WhatsAppSession.DoesNotExist:
+                logger.warning(f'Verification code not found or already used: {code}')
                 log.error_message = f'Code not found or already verified: {code}'
                 log.save(update_fields=['error_message'])
                 return Response({'message': 'Session not found.'})
@@ -117,6 +131,11 @@ def ycloud_webhook(request):
                 },
             )
 
+            if created:
+                logger.info(f'New agent created: {phone}')
+            else:
+                logger.info(f'Existing agent verified: {phone}')
+
             # Reactivate if previously deleted — reset profile data
             if not created and not agent.is_active:
                 agent.is_active = True
@@ -128,6 +147,7 @@ def ycloud_webhook(request):
                 agent.is_profile_complete = False
                 agent.has_completed_first_action = False
                 agent.save()
+                logger.info(f'Agent reactivated: {phone}')
 
             # Handle referral code for new agents
             if created and session.referral_code:
@@ -135,8 +155,9 @@ def ycloud_webhook(request):
                     referrer = Agent.objects.get(agent_code=session.referral_code)
                     agent.referred_by = referrer
                     agent.save(update_fields=['referred_by'])
+                    logger.info(f'Agent {phone} referred by {referrer.phone} (code: {session.referral_code})')
                 except Agent.DoesNotExist:
-                    pass
+                    logger.warning(f'Referral code not found: {session.referral_code}')
 
             # Generate device token and mark session verified
             device_token = generate_device_token()

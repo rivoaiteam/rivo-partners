@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import requests as http_requests
@@ -18,6 +19,8 @@ from agents.services import generate_device_token
 from config.models import AppConfig
 from referrals.models import ReferralBonus
 from referrals.serializers import ReferralBonusSerializer
+
+logger = logging.getLogger(__name__)
 
 
 def _generate_code():
@@ -49,6 +52,8 @@ def init_whatsapp(request):
     message = f'RIVO {code}'
 
     whatsapp_url = f'https://wa.me/{whatsapp_number}?text={message}'
+
+    logger.info(f'WhatsApp session created: code={code}, referral={referral_code or "none"}')
 
     return Response({
         'code': code,
@@ -93,6 +98,7 @@ def update_profile(request):
     serializer = AgentProfileUpdateSerializer(agent, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
     serializer.save()
+    logger.info(f'Profile updated: agent={agent.phone}, fields={list(request.data.keys())}')
     return Response(AgentSerializer(agent).data)
 
 
@@ -140,11 +146,10 @@ def resolve_referral_code(request, code):
 def logout(request):
     """Logout — clear device token and delete associated WhatsApp sessions."""
     agent = request.user
-    # Delete all WhatsApp sessions for this agent
     WhatsAppSession.objects.filter(agent=agent).delete()
-    # Clear device token
     agent.device_token = ''
     agent.save(update_fields=['device_token'])
+    logger.info(f'Agent logged out: {agent.phone}')
     return Response({'message': 'Logged out successfully.'})
 
 
@@ -156,6 +161,7 @@ def delete_account(request):
     agent.is_active = False
     agent.device_token = ''
     agent.save(update_fields=['is_active', 'device_token'])
+    logger.info(f'Account deleted: {agent.phone}')
     return Response({'message': 'Account deleted.'})
 
 
@@ -169,6 +175,7 @@ def connect_google(request):
 
     google_client_id = os.getenv('GOOGLE_CLIENT_ID', '')
     if not google_client_id:
+        logger.error('GOOGLE_CLIENT_ID env var not set')
         return Response({'error': 'Google OAuth not configured.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     try:
@@ -180,8 +187,10 @@ def connect_google(request):
         agent = request.user
         agent.email = email
         agent.save(update_fields=['email'])
+        logger.info(f'Google connected: agent={agent.phone}, email={email}')
         return Response(AgentSerializer(agent).data)
-    except ValueError:
+    except ValueError as e:
+        logger.warning(f'Invalid Google token for agent {request.user.phone}: {e}')
         return Response({'error': 'Invalid Google token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -197,6 +206,7 @@ def connect_outlook(request):
     client_id = os.getenv('MICROSOFT_CLIENT_ID', '')
     client_secret = os.getenv('MICROSOFT_CLIENT_SECRET', '')
     if not client_id or not client_secret:
+        logger.error('MICROSOFT_CLIENT_ID or MICROSOFT_CLIENT_SECRET env var not set')
         return Response({'error': 'Microsoft OAuth not configured.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     try:
@@ -215,6 +225,7 @@ def connect_outlook(request):
         token_data = token_response.json()
         access_token = token_data.get('access_token')
         if not access_token:
+            logger.warning(f'Microsoft token exchange failed: {token_data}')
             return Response({'error': 'Failed to get Microsoft token.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Get user profile
@@ -225,11 +236,14 @@ def connect_outlook(request):
         profile = profile_response.json()
         email = profile.get('mail') or profile.get('userPrincipalName', '')
         if not email:
+            logger.warning(f'No email in Microsoft profile: {profile}')
             return Response({'error': 'No email from Microsoft.'}, status=status.HTTP_400_BAD_REQUEST)
 
         agent = request.user
         agent.email = email
         agent.save(update_fields=['email'])
+        logger.info(f'Outlook connected: agent={agent.phone}, email={email}')
         return Response(AgentSerializer(agent).data)
-    except Exception:
+    except Exception as e:
+        logger.error(f'Microsoft auth failed for agent {request.user.phone}: {e}')
         return Response({'error': 'Microsoft auth failed.'}, status=status.HTTP_400_BAD_REQUEST)

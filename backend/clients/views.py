@@ -31,28 +31,34 @@ def submit_client(request):
     )
 
     # Push lead to Rivo CRM
+    crm_payload = {
+        'name': client.client_name,
+        'phone': client.client_phone,
+        'mortgage_amount': float(client.expected_mortgage_amount) if client.expected_mortgage_amount else None,
+        'source': agent.name or 'Rivo Partner',
+        'channel': 'Freelance Network',
+    }
     try:
+        logger.info(f'Pushing lead to CRM: {crm_payload}')
         crm_response = http_requests.post(
             'https://app.rivo.ae/api/leads/ingest/',
-            json={
-                'name': client.client_name,
-                'phone': client.client_phone,
-                'mortgage_amount': float(client.expected_mortgage_amount) if client.expected_mortgage_amount else None,
-                'source': agent.name or 'Rivo Partner',
-                'channel': 'Freelance Network',
-            },
+            json=crm_payload,
             timeout=10,
         )
-        logger.info(f'CRM response [{crm_response.status_code}]: {crm_response.text}')
+        logger.info(f'CRM response [{crm_response.status_code}]: {crm_response.text[:500]}')
         if crm_response.status_code in (200, 201):
-            crm_data = crm_response.json()
-            if crm_data.get('lead_id'):
-                client.crm_lead_id = crm_data['lead_id']
-                client.save(update_fields=['crm_lead_id'])
+            try:
+                crm_data = crm_response.json()
+                if crm_data.get('lead_id'):
+                    client.crm_lead_id = crm_data['lead_id']
+                    client.save(update_fields=['crm_lead_id'])
+                    logger.info(f'CRM lead_id stored: {crm_data["lead_id"]}')
+            except ValueError:
+                logger.warning(f'CRM returned 200 but non-JSON body: {crm_response.text[:200]}')
         else:
-            logger.warning(f'CRM rejected lead: {crm_response.status_code} — {crm_response.text}')
+            logger.warning(f'CRM rejected lead: {crm_response.status_code} — {crm_response.text[:500]}')
     except Exception as e:
-        logger.warning(f'Failed to push lead to Rivo CRM: {e}')
+        logger.error(f'Failed to push lead to Rivo CRM: {e}')
 
     # Mark agent's first action
     if not agent.has_completed_first_action:
