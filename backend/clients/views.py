@@ -1,3 +1,6 @@
+import logging
+import requests as http_requests
+
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -6,6 +9,8 @@ from rest_framework.response import Response
 from clients.models import Client
 from clients.serializers import ClientSerializer, ClientSubmitSerializer
 from agents.services import send_client_whatsapp_notification
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['POST'])
@@ -24,6 +29,26 @@ def submit_client(request):
         source_agent=agent,
         channel='PARTNER_PWA',
     )
+
+    # Push lead to Rivo CRM
+    try:
+        crm_response = http_requests.post(
+            'https://app.rivo.ae/api/leads/ingest/',
+            json={
+                'name': client.client_name,
+                'phone': client.client_phone,
+                'mortgage_amount': float(client.expected_mortgage_amount) if client.expected_mortgage_amount else None,
+                'source': agent.name or 'Rivo Partner',
+                'channel': 'Rivo Partners',
+            },
+            timeout=10,
+        )
+        crm_data = crm_response.json()
+        if crm_data.get('lead_id'):
+            client.crm_lead_id = crm_data['lead_id']
+            client.save(update_fields=['crm_lead_id'])
+    except Exception as e:
+        logger.warning(f'Failed to push lead to Rivo CRM: {e}')
 
     # Mark agent's first action
     if not agent.has_completed_first_action:

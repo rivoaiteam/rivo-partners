@@ -10,6 +10,7 @@ class Client(models.Model):
         ('QUALIFIED', 'Qualified'),
         ('APPROVED', 'Approved'),
         ('DISBURSED', 'Disbursed'),
+        ('DECLINED', 'Declined'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -23,6 +24,7 @@ class Client(models.Model):
         'agents.Agent', on_delete=models.CASCADE, related_name='clients'
     )
     channel = models.CharField(max_length=50, default='PARTNER_PWA')
+    crm_lead_id = models.UUIDField(blank=True, null=True, help_text='Lead ID from Rivo CRM')
     consent_given = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

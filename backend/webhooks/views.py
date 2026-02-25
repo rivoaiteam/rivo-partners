@@ -28,7 +28,7 @@ def client_status_webhook(request):
     new_status = request.data.get('status', '').upper()
     commission_amount = request.data.get('commission_amount')
 
-    valid_statuses = ['SUBMITTED', 'CONTACTED', 'QUALIFIED', 'APPROVED', 'DISBURSED']
+    valid_statuses = ['SUBMITTED', 'CONTACTED', 'QUALIFIED', 'APPROVED', 'DISBURSED', 'DECLINED']
     if new_status not in valid_statuses:
         log.error_message = f'Invalid status: {new_status}'
         log.save(update_fields=['error_message'])
