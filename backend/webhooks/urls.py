@@ -2,6 +2,6 @@ from django.urls import path
 from webhooks import views
 
 urlpatterns = [
-    path('client-status/', views.client_status_webhook, name='webhook-client-status'),
+    path('crm-status/', views.crm_status_webhook, name='webhook-crm-status'),
     path('ycloud/', views.ycloud_webhook, name='webhook-ycloud'),
 ]

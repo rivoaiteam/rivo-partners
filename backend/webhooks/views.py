@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -13,24 +14,24 @@ from referrals.services import process_disbursal_bonuses
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def client_status_webhook(request):
-    """Receive client status updates from Rivo OS.
-    POST /api/v1/webhook/client-status
-    Statuses: Submitted -> Contacted -> Qualified -> Approved -> Disbursed"""
+def crm_status_webhook(request):
+    """Receive lead status updates from Rivo CRM.
+    POST /api/v1/webhook/crm-status
+    Payload: { "lead_id": "uuid", "pipeline_status": "qualified", "mortgage_amount": "500000.00" }"""
 
     log = WebhookLog.objects.create(
-        source='RIVO_OS',
-        event_type='CLIENT_STATUS_UPDATE',
+        source='RIVO_CRM',
+        event_type='CRM_STATUS_UPDATE',
         payload=request.data,
     )
 
-    client_id = request.data.get('client_id')
-    new_status = request.data.get('status', '').upper()
-    commission_amount = request.data.get('commission_amount')
+    lead_id = request.data.get('lead_id')
+    pipeline_status = request.data.get('pipeline_status', '').upper()
+    mortgage_amount = request.data.get('mortgage_amount')
 
     valid_statuses = ['SUBMITTED', 'CONTACTED', 'QUALIFIED', 'APPROVED', 'DISBURSED', 'DECLINED']
-    if new_status not in valid_statuses:
-        log.error_message = f'Invalid status: {new_status}'
+    if pipeline_status not in valid_statuses:
+        log.error_message = f'Invalid status: {pipeline_status}'
         log.save(update_fields=['error_message'])
         return Response(
             {'error': f'Invalid status. Must be one of: {valid_statuses}'},
@@ -38,22 +39,25 @@ def client_status_webhook(request):
         )
 
     try:
-        client = Client.objects.get(id=client_id)
+        client = Client.objects.get(crm_lead_id=lead_id)
     except Client.DoesNotExist:
-        log.error_message = f'Client not found: {client_id}'
+        log.error_message = f'No client with crm_lead_id: {lead_id}'
         log.save(update_fields=['error_message'])
-        return Response({'error': 'Client not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Lead not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     old_status = client.status
-    client.status = new_status
+    client.status = pipeline_status
 
-    if commission_amount and new_status == 'DISBURSED':
-        from decimal import Decimal
-        client.commission_amount = Decimal(str(commission_amount))
+    if mortgage_amount:
+        client.expected_mortgage_amount = Decimal(str(mortgage_amount))
+        client.estimated_commission = None  # recalculate on save
+
+    if pipeline_status == 'DISBURSED' and mortgage_amount:
+        client.commission_amount = Decimal(str(mortgage_amount))
 
     client.save()
 
-    if new_status == 'DISBURSED' and old_status != 'DISBURSED':
+    if pipeline_status == 'DISBURSED' and old_status != 'DISBURSED':
         process_disbursal_bonuses(client)
 
     log.processed = True
