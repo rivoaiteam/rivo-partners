@@ -144,13 +144,14 @@ def ycloud_webhook(request):
                 agent.agent_type = ''
                 agent.agent_type_other = ''
                 agent.rera_number = ''
+                agent.referred_by = None
                 agent.is_profile_complete = False
                 agent.has_completed_first_action = False
                 agent.save()
                 logger.info(f'Agent reactivated: {phone}')
 
-            # Handle referral code for new agents
-            if created and session.referral_code:
+            # Handle referral code for new or reactivated agents
+            if session.referral_code and not agent.referred_by:
                 try:
                     referrer = Agent.objects.get(agent_code=session.referral_code)
                     agent.referred_by = referrer
