@@ -41,7 +41,7 @@ def submit_client(request):
     try:
         logger.info(f'Pushing lead to CRM: {crm_payload}')
         crm_response = http_requests.post(
-            'https://app.rivo.ae/api/leads/ingest/',
+            'https://rivo-backend-331738587654.asia-southeast1.run.app/api/leads/ingest/',
             json=crm_payload,
             timeout=10,
         )
