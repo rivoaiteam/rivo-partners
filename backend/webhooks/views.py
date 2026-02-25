@@ -102,7 +102,10 @@ def ycloud_webhook(request):
         if not text:
             text = wa_message.get('text', '') if isinstance(wa_message.get('text'), str) else ''
 
-        logger.info(f'YCloud message from {from_phone}: {text[:50]}')
+        # Extract WhatsApp profile name
+        wa_profile_name = wa_message.get('customerProfile', {}).get('name', '') if isinstance(wa_message.get('customerProfile'), dict) else ''
+
+        logger.info(f'YCloud message from {from_phone} (name: {wa_profile_name}): {text[:50]}')
 
         # Extract verification code from message: RIVO 123456
         match = re.search(r'RIVO\s*(\d{6})', text.upper())
@@ -127,6 +130,7 @@ def ycloud_webhook(request):
             agent, created = Agent.objects.get_or_create(
                 phone=phone,
                 defaults={
+                    'name': wa_profile_name,
                     'is_whatsapp_business': session.is_whatsapp_business,
                 },
             )
@@ -139,7 +143,7 @@ def ycloud_webhook(request):
             # Reactivate if previously deleted — reset profile data
             if not created and not agent.is_active:
                 agent.is_active = True
-                agent.name = ''
+                agent.name = wa_profile_name
                 agent.email = ''
                 agent.agent_type = ''
                 agent.agent_type_other = ''

@@ -69,7 +69,7 @@ def submit_client(request):
     # Send WhatsApp notification to client
     send_client_whatsapp_notification(
         client.client_phone,
-        agent.name or 'A Rivo Partner agent',
+        agent.name or agent.phone,
         client.client_name,
     )
 

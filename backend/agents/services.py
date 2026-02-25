@@ -73,7 +73,7 @@ def send_inactive_nudge(agent):
         'inactive_nudge_msg',
         'Hey {agent_name}, you haven\'t submitted any clients recently. Refer a mortgage client today and earn commissions! Open Rivo Partners: https://partners.rivo.ae'
     )
-    agent_name = agent.name or 'Partner'
+    agent_name = agent.name or agent.phone
     message = template.replace('{agent_name}', agent_name)
     return _send_whatsapp(agent.phone, message)
 
@@ -84,7 +84,7 @@ def send_milestone_notification(agent, milestone):
         'milestone_msg',
         'Congratulations {agent_name}! You\'ve hit a milestone: {milestone}. Keep up the great work!'
     )
-    agent_name = agent.name or 'Partner'
+    agent_name = agent.name or agent.phone
     message = template.replace('{agent_name}', agent_name).replace('{milestone}', milestone)
     return _send_whatsapp(agent.phone, message)
 
