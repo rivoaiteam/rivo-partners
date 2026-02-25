@@ -162,6 +162,12 @@ def logout(request):
 def delete_account(request):
     """Soft-delete agent account."""
     agent = request.user
+    # Unlink clients and bonuses for fresh start on re-signup
+    agent.clients.update(source_agent=None)
+    from referrals.models import ReferralBonus, NewAgentBonus
+    NewAgentBonus.objects.filter(agent=agent).delete()
+    ReferralBonus.objects.filter(referrer=agent).delete()
+
     agent.is_active = False
     agent.device_token = ''
     agent.referred_by = None
