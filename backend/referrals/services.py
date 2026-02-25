@@ -1,6 +1,7 @@
 import logging
 from decimal import Decimal
 from config.models import AppConfig
+from agents.services import send_referral_bonus_notification
 from referrals.models import ReferralBonus, NewAgentBonus
 
 logger = logging.getLogger(__name__)
@@ -61,3 +62,4 @@ def _process_referrer_bonus(referrer, triggered_by_agent, client):
             amount=amount,
         )
         logger.info(f'Referrer bonus awarded: referrer={referrer.phone}, triggered_by={triggered_by_agent.phone}, deal #{deal_number}, amount={amount}')
+        send_referral_bonus_notification(referrer, triggered_by_agent, amount, deal_number)
