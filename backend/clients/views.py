@@ -43,10 +43,14 @@ def submit_client(request):
             },
             timeout=10,
         )
-        crm_data = crm_response.json()
-        if crm_data.get('lead_id'):
-            client.crm_lead_id = crm_data['lead_id']
-            client.save(update_fields=['crm_lead_id'])
+        logger.info(f'CRM response [{crm_response.status_code}]: {crm_response.text}')
+        if crm_response.status_code in (200, 201):
+            crm_data = crm_response.json()
+            if crm_data.get('lead_id'):
+                client.crm_lead_id = crm_data['lead_id']
+                client.save(update_fields=['crm_lead_id'])
+        else:
+            logger.warning(f'CRM rejected lead: {crm_response.status_code} — {crm_response.text}')
     except Exception as e:
         logger.warning(f'Failed to push lead to Rivo CRM: {e}')
 
