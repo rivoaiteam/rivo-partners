@@ -23,7 +23,7 @@ class Client(models.Model):
     commission_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='SUBMITTED')
     source_agent = models.ForeignKey(
-        'agents.Agent', on_delete=models.CASCADE, related_name='clients'
+        'agents.Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='clients'
     )
     channel = models.CharField(max_length=50, default='PARTNER_PWA')
     crm_lead_id = models.UUIDField(blank=True, null=True, help_text='Lead ID from Rivo CRM')
