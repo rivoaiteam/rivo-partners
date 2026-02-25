@@ -28,18 +28,25 @@ class ClientSubmitSerializer(serializers.Serializer):
         return value
 
     def validate(self, data):
+        import re
         agent = self.context.get('agent')
         if not agent:
             raise serializers.ValidationError('Agent context required.')
 
-        # Agent cannot refer themselves
-        if data['client_phone'] == agent.phone:
+        # Normalize phone to digits only for comparison
+        client_digits = re.sub(r'\D', '', data['client_phone'])
+        agent_digits = re.sub(r'\D', '', agent.phone)
+
+        # Agent cannot refer themselves — match if digits are same or one is suffix of the other
+        if client_digits == agent_digits or client_digits.endswith(agent_digits[-10:]) or agent_digits.endswith(client_digits[-10:]):
             raise serializers.ValidationError(
                 {'client_phone': 'You cannot refer yourself as a client.'}
             )
 
-        # Duplicate phone check
-        if Client.objects.filter(client_phone=data['client_phone']).exists():
+        # Duplicate phone check — check with and without + prefix
+        phone = data['client_phone']
+        phone_variants = [phone, f'+{client_digits}', client_digits]
+        if Client.objects.filter(client_phone__in=phone_variants).exists():
             raise serializers.ValidationError(
                 {'client_phone': 'This client has already been referred.'}
             )
