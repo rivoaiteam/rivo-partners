@@ -8,7 +8,6 @@ from rest_framework.response import Response
 
 from clients.models import Client
 from clients.serializers import ClientSerializer, ClientSubmitSerializer
-from agents.services import send_client_whatsapp_notification
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +65,7 @@ def submit_client(request):
         agent.has_completed_first_action = True
         agent.save(update_fields=['has_completed_first_action'])
 
-    # Send WhatsApp notification to client
-    send_client_whatsapp_notification(
-        client.client_phone,
-        agent.name or agent.phone,
-        client.client_name,
-    )
+    # TODO: Send WhatsApp template notification to client via YCloud templates
 
     return Response(ClientSerializer(client).data, status=status.HTTP_201_CREATED)
 

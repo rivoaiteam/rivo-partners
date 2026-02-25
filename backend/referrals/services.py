@@ -1,7 +1,6 @@
 import logging
 from decimal import Decimal
 from config.models import AppConfig
-from agents.services import send_referral_bonus_notification, send_milestone_notification
 from referrals.models import ReferralBonus, NewAgentBonus
 
 logger = logging.getLogger(__name__)
@@ -41,11 +40,6 @@ def _process_new_agent_bonus(agent, client):
         )
         logger.info(f'New agent bonus awarded: agent={agent.phone}, deal #{deal_number}, amount={amount}')
 
-    # Milestone check
-    total_disbursed = agent.clients.filter(status='DISBURSED').count()
-    milestones = AppConfig.get_value('milestone_thresholds', [3, 5, 10, 25, 50])
-    if total_disbursed in milestones:
-        send_milestone_notification(agent, f'{total_disbursed} deals disbursed')
 
 
 def _process_referrer_bonus(referrer, triggered_by_agent, client):
@@ -67,5 +61,3 @@ def _process_referrer_bonus(referrer, triggered_by_agent, client):
             amount=amount,
         )
         logger.info(f'Referrer bonus awarded: referrer={referrer.phone}, triggered_by={triggered_by_agent.phone}, deal #{deal_number}, amount={amount}')
-        # Notify referrer via WhatsApp
-        send_referral_bonus_notification(referrer, triggered_by_agent, amount, deal_number)
