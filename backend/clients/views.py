@@ -39,7 +39,7 @@ def submit_client(request):
                 'phone': client.client_phone,
                 'mortgage_amount': float(client.expected_mortgage_amount) if client.expected_mortgage_amount else None,
                 'source': agent.name or 'Rivo Partner',
-                'channel': 'Rivo Partners',
+                'channel': 'Freelance Network',
             },
             timeout=10,
         )
