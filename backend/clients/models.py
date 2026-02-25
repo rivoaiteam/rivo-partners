@@ -8,7 +8,9 @@ class Client(models.Model):
         ('SUBMITTED', 'Submitted'),
         ('CONTACTED', 'Contacted'),
         ('QUALIFIED', 'Qualified'),
-        ('APPROVED', 'Approved'),
+        ('SUBMITTED_TO_BANK', 'Submitted to Bank'),
+        ('PREAPPROVED', 'Preapproved'),
+        ('FOL_RECEIVED', 'FOL Received'),
         ('DISBURSED', 'Disbursed'),
         ('DECLINED', 'Declined'),
     ]

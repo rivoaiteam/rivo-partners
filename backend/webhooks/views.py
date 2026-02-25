@@ -29,7 +29,7 @@ def crm_status_webhook(request):
     pipeline_status = request.data.get('pipeline_status', '').upper()
     mortgage_amount = request.data.get('mortgage_amount')
 
-    valid_statuses = ['SUBMITTED', 'CONTACTED', 'QUALIFIED', 'APPROVED', 'DISBURSED', 'DECLINED']
+    valid_statuses = ['SUBMITTED', 'CONTACTED', 'QUALIFIED', 'SUBMITTED_TO_BANK', 'PREAPPROVED', 'FOL_RECEIVED', 'DISBURSED', 'DECLINED']
     if pipeline_status not in valid_statuses:
         log.error_message = f'Invalid status: {pipeline_status}'
         log.save(update_fields=['error_message'])

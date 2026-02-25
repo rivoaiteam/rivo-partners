@@ -64,7 +64,7 @@ class Agent(models.Model):
 
     @property
     def pending_amount(self):
-        active = self.clients.filter(status='APPROVED')
+        active = self.clients.filter(status__in=['PREAPPROVED', 'FOL_RECEIVED'])
         return sum(c.estimated_commission or 0 for c in active)
 
     @property
