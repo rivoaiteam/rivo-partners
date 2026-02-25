@@ -42,7 +42,6 @@ def _process_new_agent_bonus(agent, client):
         logger.info(f'New agent bonus awarded: agent={agent.phone}, deal #{deal_number}, amount={amount}')
 
 
-
 def _process_referrer_bonus(referrer, triggered_by_agent, client):
     """Award bonus to referrer on first N disbursals across their ENTIRE network."""
     bonus_config = AppConfig.get_value('referrer_bonuses', [500, 500, 1000])

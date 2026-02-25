@@ -3,8 +3,7 @@ from django.db import models
 
 
 class ReferralBonus(models.Model):
-    """Bonus earned by a referrer when their referred agents' deals get disbursed.
-    Max 3 bonuses per referrer across their entire network."""
+    """Bonus earned by a referrer when their referred agents' deals get disbursed."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     referrer = models.ForeignKey(
         'agents.Agent', on_delete=models.CASCADE, related_name='referral_bonuses'
@@ -15,7 +14,7 @@ class ReferralBonus(models.Model):
     triggered_by_client = models.ForeignKey(
         'clients.Client', on_delete=models.CASCADE, related_name='referral_bonuses'
     )
-    deal_number = models.PositiveIntegerField()  # 1, 2, or 3
+    deal_number = models.PositiveIntegerField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -34,7 +33,7 @@ class ReferralBonus(models.Model):
 
 
 class NewAgentBonus(models.Model):
-    """Bonus earned by a new agent on their first 3 deals."""
+    """Bonus earned by a new agent on their first N deals (configurable via AppConfig)."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     agent = models.ForeignKey(
         'agents.Agent', on_delete=models.CASCADE, related_name='new_agent_bonuses'
@@ -42,7 +41,7 @@ class NewAgentBonus(models.Model):
     client = models.ForeignKey(
         'clients.Client', on_delete=models.CASCADE, related_name='new_agent_bonuses'
     )
-    deal_number = models.PositiveIntegerField()  # 1, 2, or 3
+    deal_number = models.PositiveIntegerField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 

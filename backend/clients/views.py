@@ -96,16 +96,3 @@ def list_clients(request):
 
     serializer = ClientSerializer(clients, many=True)
     return Response(serializer.data)
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def client_detail(request, client_id):
-    """Get details of a specific client."""
-    agent = request.user
-    try:
-        client = Client.objects.get(id=client_id, source_agent=agent)
-    except Client.DoesNotExist:
-        return Response({'error': 'Client not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    return Response(ClientSerializer(client).data)
