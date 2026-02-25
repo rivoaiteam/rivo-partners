@@ -8,6 +8,7 @@ SEED_DATA = {
     'commission_max_percent': ('0.60', 'Maximum commission percentage'),
     'avg_payout': ('9000', 'Average payout per referred deal in AED'),
     'referrer_bonuses': ('[500, 500, 1000]', 'Referrer bonus amounts for first 3 disbursals across entire network'),
+    'new_agent_bonuses': ('[1000, 750, 500]', 'New agent bonus amounts for their first 3 disbursed deals'),
     'client_whatsapp_msg': (
         '{agent_name} referred you as a client to Rivo for mortgage assistance. Our team will reach out to you within 30 minutes.',
         'WhatsApp message sent to referred client',
