@@ -48,10 +48,14 @@ def init_whatsapp(request):
         is_whatsapp_business=is_business,
     )
 
-    whatsapp_number = os.getenv('YCLOUD_WHATSAPP_NUMBER', '').lstrip('+')
     message = f'RIVO {code}'
 
-    whatsapp_url = f'https://wa.me/{whatsapp_number}?text={message}'
+    if is_business:
+        base_url = AppConfig.get_value('whatsapp_business', 'https://wa.me/971545079577')
+    else:
+        base_url = AppConfig.get_value('whatsapp_personal', 'https://wa.me/971545079577')
+
+    whatsapp_url = f'{base_url}?text={message}'
 
     logger.info(f'WhatsApp session created: code={code}, referral={referral_code or "none"}')
 
