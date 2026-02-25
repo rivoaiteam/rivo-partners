@@ -37,6 +37,7 @@ def submit_client(request):
         'mortgage_amount': float(client.expected_mortgage_amount) if client.expected_mortgage_amount else None,
         'source': agent.name or 'Rivo Partner',
         'channel': 'Freelance Network',
+        'referrer_phone': agent.phone,
     }
     try:
         logger.info(f'Pushing lead to CRM: {crm_payload}')
