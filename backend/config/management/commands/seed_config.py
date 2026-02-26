@@ -15,10 +15,6 @@ SEED_DATA = {
     ),
     'whatsapp_personal': ('https://wa.me/971545079577', 'WhatsApp personal deep link URL'),
     'whatsapp_business': ('https://wa.me/971545079577', 'WhatsApp Business deep link URL'),
-    'referral_signup_msg': (
-        'Great news! {agent_name} just joined Rivo using your referral link. You earn bonuses when their deals get disbursed.',
-        'WhatsApp message sent to referrer when their referred agent signs up',
-    ),
     'inactive_nudge_days': ('7', 'Number of days of inactivity before sending nudge'),
     'welcome_msg': (
         "Hey there! Thanks for verifying. Your Rivo account is now active and ready to go. 🎉\n\nYou can now start helping your clients get their mortgages approved while securing your commissions.\n\nTap here to return to your Rivo dashboard:\n👉 https://partners.rivo.ae",

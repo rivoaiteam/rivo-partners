@@ -77,15 +77,10 @@ def send_welcome_message(agent):
 
 
 def send_referral_signup_notification(referrer, new_agent):
-    """Notify referrer when their referred agent signs up (Case 4).
-    Works as plain text since referrer has open 24h conversation window."""
-    template = AppConfig.get_value(
-        'referral_signup_msg',
-        'Great news! {agent_name} just joined Rivo using your referral link. You earn bonuses when their deals get disbursed.'
-    )
+    """Notify referrer when their referred agent signs up.
+    Template: referral_signup_msg — {{1}} = agent_name"""
     agent_name = new_agent.name or new_agent.phone
-    message = template.replace('{agent_name}', agent_name)
-    return _send_whatsapp(referrer.phone, message)
+    return _send_whatsapp_template(referrer.phone, 'referral_signup_msg', [agent_name])
 
 
 def send_client_whatsapp_notification(client_phone, agent_name, client_name):
