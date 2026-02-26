@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from agents.models import Agent, WhatsAppSession
-from agents.services import generate_device_token, send_referral_signup_notification
+from agents.services import generate_device_token, send_referral_signup_notification, send_welcome_message
 from clients.models import Client
 from webhooks.models import WebhookLog
 from referrals.services import process_disbursal_bonuses
@@ -176,6 +176,9 @@ def ycloud_webhook(request):
             session.device_token = device_token
             session.is_verified = True
             session.save()
+
+            # Send welcome message (within 24h window since they just sent OTP)
+            send_welcome_message(agent)
 
             log.processed = True
             log.save(update_fields=['processed'])
