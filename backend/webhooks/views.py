@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from agents.models import Agent, WhatsAppSession
-from agents.services import generate_device_token, send_referral_signup_notification
+from agents.services import generate_device_token, send_referral_signup_notification, send_verification_reply
 from clients.models import Client
 from webhooks.models import WebhookLog
 from referrals.services import process_disbursal_bonuses
@@ -161,9 +161,7 @@ def ycloud_webhook(request):
                     agent.referred_by = referrer
                     agent.save(update_fields=['referred_by'])
                     logger.info(f'Agent {phone} referred by {referrer.phone} (code: {session.referral_code})')
-                    # Notify referrer in background so it doesn't block verification
-                    import threading
-                    threading.Thread(target=send_referral_signup_notification, args=(referrer, agent), daemon=True).start()
+                    send_referral_signup_notification(referrer, agent)
                 except Agent.DoesNotExist:
                     logger.warning(f'Referral code not found: {session.referral_code}')
 
@@ -177,6 +175,12 @@ def ycloud_webhook(request):
             session.device_token = device_token
             session.is_verified = True
             session.save()
+
+            # Send WhatsApp reply with link back to the app
+            try:
+                send_verification_reply(phone, code)
+            except Exception as e:
+                logger.warning(f'Failed to send verification reply to {phone}: {e}')
 
             log.processed = True
             log.save(update_fields=['processed'])

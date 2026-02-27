@@ -16,6 +16,13 @@ SEED_DATA = {
     'whatsapp_personal': ('https://wa.me/971545079577', 'WhatsApp personal deep link URL'),
     'whatsapp_business': ('https://wa.me/971545079577', 'WhatsApp Business deep link URL'),
     'inactive_nudge_days': ('7', 'Number of days of inactivity before sending nudge'),
+    'welcome_msg': (
+        "Hey there! Thanks for verifying. Your Rivo account is now active and ready to go.\n\n"
+        "You can now start helping your clients get their mortgages approved while securing your commissions.\n\n"
+        "Tap here to return to your Rivo dashboard:\n"
+        "{url}",
+        'Welcome message sent after WhatsApp verification. {url} is replaced with the verify link.',
+    ),
 }
 
 
