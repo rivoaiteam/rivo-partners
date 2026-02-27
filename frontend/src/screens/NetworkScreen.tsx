@@ -7,7 +7,8 @@ import { Link } from "react-router-dom";
 import { useState, useEffect, useReducer } from "react";
 import { getNetwork } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
-import { openWhatsAppShare } from "@/lib/whatsapp";
+import { getWhatsAppPref, openWhatsAppDirect } from "@/lib/whatsapp";
+import { WhatsAppShareSheet } from "@/components/ui/WhatsAppShareSheet";
 
 interface NetworkAgent {
   id: string;
@@ -33,13 +34,17 @@ export default function NetworkScreen() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [network, setNetwork] = useState<NetworkData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [, rerender] = useReducer(x => x + 1, 0);
+  const [showShareSheet, setShowShareSheet] = useState(false);
+  const [shareText, setShareText] = useState("");
 
   useEffect(() => {
     loadConfig().then(() => rerender());
     getNetwork()
       .then(setNetwork)
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   const agentCode = network?.agent_code || user?.agent_code || "";
@@ -54,7 +59,13 @@ export default function NetworkScreen() {
     const message = CONFIG.MESSAGES.SHARE_TEXT.includes("{url}")
       ? CONFIG.MESSAGES.SHARE_TEXT.replace("{url}", url)
       : CONFIG.MESSAGES.SHARE_TEXT + url;
-    openWhatsAppShare(message);
+    const pref = getWhatsAppPref();
+    if (pref) {
+      openWhatsAppDirect(message, pref);
+    } else {
+      setShareText(message);
+      setShowShareSheet(true);
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -148,7 +159,19 @@ export default function NetworkScreen() {
             )}
           </h3>
 
-          {network?.referred_agents.length === 0 ? (
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex justify-between items-center py-2 border-b border-zinc-900 animate-pulse">
+                  <div>
+                    <div className="h-4 w-24 bg-zinc-800 rounded" />
+                    <div className="h-3 w-32 bg-zinc-800 rounded mt-2" />
+                  </div>
+                  <div className="h-4 w-16 bg-zinc-800 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : network?.referred_agents.length === 0 ? (
             <p className="text-gray-500 text-sm py-4">No agents in your network yet. Share your link to start earning bonuses.</p>
           ) : (
             <div className="space-y-4">
@@ -170,6 +193,12 @@ export default function NetworkScreen() {
           )}
         </div>
       </div>
+
+      <WhatsAppShareSheet
+        open={showShareSheet}
+        onClose={() => setShowShareSheet(false)}
+        text={shareText}
+      />
     </div>
   );
 }

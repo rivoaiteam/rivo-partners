@@ -5,7 +5,8 @@ import { motion } from "motion/react";
 import { CONFIG, loadConfig } from "@/config";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
-import { openWhatsAppShare } from "@/lib/whatsapp";
+import { getWhatsAppPref, openWhatsAppDirect } from "@/lib/whatsapp";
+import { WhatsAppShareSheet } from "@/components/ui/WhatsAppShareSheet";
 
 function ordinal(n: number) {
   const s = ["th", "st", "nd", "rd"];
@@ -17,6 +18,8 @@ export default function ReferralInfoScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [, setLoaded] = useState(false);
+  const [showShareSheet, setShowShareSheet] = useState(false);
+  const [shareText, setShareText] = useState("");
 
   useEffect(() => { loadConfig().then(() => setLoaded(true)); }, []);
 
@@ -25,7 +28,13 @@ export default function ReferralInfoScreen() {
     const message = CONFIG.MESSAGES.SHARE_TEXT.includes("{url}")
       ? CONFIG.MESSAGES.SHARE_TEXT.replace("{url}", url)
       : CONFIG.MESSAGES.SHARE_TEXT + url;
-    openWhatsAppShare(message);
+    const pref = getWhatsAppPref();
+    if (pref) {
+      openWhatsAppDirect(message, pref);
+    } else {
+      setShareText(message);
+      setShowShareSheet(true);
+    }
   };
 
   return (
@@ -114,6 +123,12 @@ export default function ReferralInfoScreen() {
           </Button>
         </div>
       </div>
+
+      <WhatsAppShareSheet
+        open={showShareSheet}
+        onClose={() => setShowShareSheet(false)}
+        text={shareText}
+      />
     </div>
   );
 }
