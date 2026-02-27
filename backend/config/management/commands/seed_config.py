@@ -33,7 +33,7 @@ SEED_DATA = {
     ),
     'welcome_back_msg': (
         "Welcome back! You've been signed in successfully.\n\n"
-        "Tap here to return to your Rivo dashboard:\n"
+        "Tap here to return to your dashboard:\n"
         "{url}",
         'Welcome back message for returning users. {url} is replaced with the verify link.',
     ),
