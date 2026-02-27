@@ -134,7 +134,7 @@ export default function WhatsAppListeningScreen() {
       openWhatsAppChat("971545079577", `RIVO ${code}`);
     } else {
       try {
-        const isBusiness = localStorage.getItem("rivo_wa_type") === "business";
+        const isBusiness = getWhatsAppPref() === "business";
         const referralCode = localStorage.getItem("rivo_referral_code") || "";
         const data = await initWhatsApp(referralCode, isBusiness);
         localStorage.setItem("rivo_verify_code", data.code);

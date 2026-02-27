@@ -39,7 +39,7 @@ export default function ProfileScreen() {
     localStorage.removeItem("rivo_token");
     localStorage.removeItem("rivo_user");
     localStorage.removeItem("rivo_referral_code");
-    localStorage.removeItem("rivo_wa_type");
+    localStorage.removeItem("rivo_whatsapp_pref");
     localStorage.removeItem("rivo_verify_code");
     await logout();
     navigate("/");
