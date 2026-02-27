@@ -108,7 +108,7 @@ def ycloud_webhook(request):
         logger.info(f'YCloud message from {from_phone} (name: {wa_profile_name}): {text[:50]}')
 
         # Extract verification code from message: RIVO 123456
-        match = re.search(r'RIVO\s*(\d{6})', text.upper())
+        match = re.search(r'RIVO\s*(\d{6})(?!\d)', text.upper())
         phone = from_phone if from_phone.startswith('+') else f'+{from_phone}' if from_phone else ''
 
         def _send_retry(phone):
