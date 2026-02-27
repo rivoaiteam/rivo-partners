@@ -73,9 +73,10 @@ def send_verification_reply(phone, code):
     url = f'https://partners.rivo.ae/whatsapp-verify?code={code}'
     try:
         template = AppConfig.objects.get(key='welcome_msg').value
-        message = template.replace('{url}', url)
     except AppConfig.DoesNotExist:
-        message = f"You're verified! Tap to continue:\n{url}"
+        logger.warning('welcome_msg not found in AppConfig, skipping verification reply')
+        return False
+    message = template.replace('{url}', url)
     return _send_whatsapp(phone, message)
 
 
