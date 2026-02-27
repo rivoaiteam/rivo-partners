@@ -1,6 +1,8 @@
 import logging
 import re
 from decimal import Decimal
+from urllib.parse import quote
+from django.conf import settings
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -112,7 +114,7 @@ def ycloud_webhook(request):
         phone = from_phone if from_phone.startswith('+') else f'+{from_phone}' if from_phone else ''
 
         def _send_retry(phone):
-            """Resend OTP message with correct code from the most recent pending session."""
+            """Send a wa.me link with the correct pre-filled code so user can just tap and send."""
             from django.utils import timezone
             from datetime import timedelta
             cutoff = timezone.now() - timedelta(minutes=15)
@@ -123,7 +125,10 @@ def ycloud_webhook(request):
             if pending:
                 from config.models import AppConfig
                 otp_template = AppConfig.get_value('otp_msg', 'Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}')
-                msg = otp_template.replace('{code}', pending.code)
+                prefilled = otp_template.replace('{code}', pending.code)
+                wa_number = settings.YCLOUD_WHATSAPP_NUMBER.lstrip('+')
+                wa_link = f'https://wa.me/{wa_number}?text={quote(prefilled)}'
+                msg = f"That code didn't work. Tap below to try again:\n{wa_link}"
                 _send_whatsapp(phone, msg)
             else:
                 _send_whatsapp(phone, "We couldn't find your verification session. Please go back to the app and try again:\nhttps://partners.rivo.ae")
