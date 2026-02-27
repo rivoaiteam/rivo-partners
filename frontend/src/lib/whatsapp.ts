@@ -77,8 +77,8 @@ function buildDeepLink(type: WhatsAppType, params: string): string {
   if (isIOS()) {
     return `whatsapp-smb://send?${params}`;
   }
-  // Android Business: intent with package targeting
-  return `intent://send?${params}#Intent;package=com.whatsapp.w4b;end`;
+  // Android Business: intent with scheme + package targeting
+  return `intent://send?${params}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`;
 }
 
 /**
