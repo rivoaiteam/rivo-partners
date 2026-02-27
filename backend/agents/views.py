@@ -40,6 +40,7 @@ def init_whatsapp(request):
     The pre-filled message contains the code. User just taps send."""
     referral_code = request.data.get('referral_code', '')
     is_business = request.data.get('is_whatsapp_business', False)
+    is_sign_in = request.data.get('is_sign_in', False)
 
     code = _generate_code()
 
@@ -49,7 +50,10 @@ def init_whatsapp(request):
         is_whatsapp_business=is_business,
     )
 
-    otp_template = AppConfig.get_value('otp_msg', 'Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}')
+    if is_sign_in:
+        otp_template = AppConfig.get_value('signin_msg', 'Welcome back to Rivo!\nMy sign-in code is: RIVO {code}')
+    else:
+        otp_template = AppConfig.get_value('otp_msg', 'Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}')
     message = otp_template.replace('{code}', code)
 
     if is_business:

@@ -38,9 +38,10 @@ export default function LandingScreen() {
   }, [searchParams]);
 
   const proceedToWhatsApp = async () => {
-    const referralCode = localStorage.getItem("rivo_referral_code") || "";
+    const isReturningUser = !!getWhatsAppPref();
+    const referralCode = isReturningUser ? "" : localStorage.getItem("rivo_referral_code") || "";
     try {
-      const data = await initWhatsApp(referralCode, false);
+      const data = await initWhatsApp(referralCode, false, isReturningUser);
       localStorage.setItem("rivo_verify_code", data.code);
       localStorage.setItem("rivo_wa_pending", data.whatsapp_url);
       navigate("/whatsapp-verify");

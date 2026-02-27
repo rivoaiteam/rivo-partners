@@ -66,16 +66,21 @@ def _send_whatsapp_template(phone, template_name, parameters=None):
         return False
 
 
-def send_verification_reply(phone, code):
+def send_verification_reply(phone, code, is_returning_user=False):
     """Send WhatsApp reply after verification with link back to the app.
-    Reads message template from AppConfig (key: welcome_msg).
+    Uses welcome_back_msg for returning users, welcome_msg for new users.
     Uses plain text (within 24h customer service window)."""
     url = f'https://partners.rivo.ae/whatsapp-verify?code={code}'
+    config_key = 'welcome_back_msg' if is_returning_user else 'welcome_msg'
     try:
-        template = AppConfig.objects.get(key='welcome_msg').value
+        template = AppConfig.objects.get(key=config_key).value
     except AppConfig.DoesNotExist:
-        logger.warning('welcome_msg not found in AppConfig, skipping verification reply')
-        return False
+        # Fall back to welcome_msg if welcome_back_msg doesn't exist yet
+        try:
+            template = AppConfig.objects.get(key='welcome_msg').value
+        except AppConfig.DoesNotExist:
+            logger.warning('welcome_msg not found in AppConfig, skipping verification reply')
+            return False
     message = template.replace('{url}', url)
     return _send_whatsapp(phone, message)
 

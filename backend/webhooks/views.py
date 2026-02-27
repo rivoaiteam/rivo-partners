@@ -211,8 +211,9 @@ def ycloud_webhook(request):
             session.save()
 
             # Send WhatsApp reply with link back to the app
+            is_returning_user = not created and agent.is_active
             try:
-                send_verification_reply(phone, code)
+                send_verification_reply(phone, code, is_returning_user=is_returning_user)
             except Exception as e:
                 logger.warning(f'Failed to send verification reply to {phone}: {e}')
 

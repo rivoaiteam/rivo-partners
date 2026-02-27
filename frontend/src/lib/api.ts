@@ -29,10 +29,10 @@ async function request(path: string, options: RequestInit = {}) {
 }
 
 // Auth
-export function initWhatsApp(referralCode = '', isWhatsappBusiness = false) {
+export function initWhatsApp(referralCode = '', isWhatsappBusiness = false, isSignIn = false) {
   return request('/agents/init-whatsapp/', {
     method: 'POST',
-    body: JSON.stringify({ referral_code: referralCode, is_whatsapp_business: isWhatsappBusiness }),
+    body: JSON.stringify({ referral_code: referralCode, is_whatsapp_business: isWhatsappBusiness, is_sign_in: isSignIn }),
   });
 }
 

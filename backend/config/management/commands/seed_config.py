@@ -20,12 +20,22 @@ SEED_DATA = {
         "Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}",
         'Pre-filled OTP message sent to WhatsApp. {code} is replaced with the 6-digit code.',
     ),
+    'signin_msg': (
+        "Welcome back to Rivo!\nMy sign-in code is: RIVO {code}",
+        'Pre-filled sign-in message for returning users. {code} is replaced with the 6-digit code.',
+    ),
     'welcome_msg': (
         "Hey there! Thanks for verifying. Your Rivo account is now active and ready to go.\n\n"
         "You can now start helping your clients get their mortgages approved while securing your commissions.\n\n"
         "Tap here to return to your Rivo dashboard:\n"
         "{url}",
         'Welcome message sent after WhatsApp verification. {url} is replaced with the verify link.',
+    ),
+    'welcome_back_msg': (
+        "Welcome back! You've been signed in successfully.\n\n"
+        "Tap here to return to your Rivo dashboard:\n"
+        "{url}",
+        'Welcome back message for returning users. {url} is replaced with the verify link.',
     ),
 }
 
