@@ -66,16 +66,6 @@ def _send_whatsapp_template(phone, template_name, parameters=None):
         return False
 
 
-def send_welcome_message(agent):
-    """Send welcome message to agent right after OTP verification.
-    Works as plain text since agent just sent a message (24h window open)."""
-    message = AppConfig.get_value(
-        'welcome_msg',
-        "Hey there! Thanks for verifying. Your Rivo account is now active and ready to go. 🎉\n\nYou can now start helping your clients get their mortgages approved while securing your commissions.\n\nTap here to return to your Rivo dashboard:\n👉 https://partners.rivo.ae"
-    )
-    return _send_whatsapp(agent.phone, message)
-
-
 def send_referral_signup_notification(referrer, new_agent):
     """Notify referrer when their referred agent signs up.
     Template: referral_signup_msg — {{1}} = agent_name"""
