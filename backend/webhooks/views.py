@@ -130,8 +130,6 @@ def ycloud_webhook(request):
                 wa_link = f'https://wa.me/{wa_number}?text={quote(prefilled)}'
                 msg = f"That code didn't work. Tap below to try again:\n{wa_link}"
                 _send_whatsapp(phone, msg)
-            else:
-                _send_whatsapp(phone, "We couldn't find your verification session. Please go back to the app and try again:\nhttps://partners.rivo.ae")
 
         if not match and from_phone:
             logger.warning(f'No valid code found in message from {from_phone}: {text[:50]}')
