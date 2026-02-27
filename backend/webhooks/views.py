@@ -110,11 +110,25 @@ def ycloud_webhook(request):
         # Extract verification code from message: RIVO 123456
         match = re.search(r'RIVO\s*(\d{6})', text.upper())
         phone = from_phone if from_phone.startswith('+') else f'+{from_phone}' if from_phone else ''
-        retry_msg = "We couldn't verify your code. Please send the correct code again."
+
+        def _send_retry(phone):
+            """Resend OTP message with correct code from the most recent pending session."""
+            from django.utils import timezone
+            from datetime import timedelta
+            cutoff = timezone.now() - timedelta(minutes=15)
+            pending = WhatsAppSession.objects.filter(
+                is_verified=False,
+                created_at__gte=cutoff,
+            ).order_by('-created_at').first()
+            if pending:
+                msg = f'➡️ Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {pending.code}'
+                _send_whatsapp(phone, msg)
+            else:
+                _send_whatsapp(phone, "We couldn't find your verification session. Please go back to the app and try again:\nhttps://partners.rivo.ae")
 
         if not match and from_phone:
             logger.warning(f'No valid code found in message from {from_phone}: {text[:50]}')
-            _send_whatsapp(phone, retry_msg)
+            _send_retry(phone)
             log.error_message = 'No valid RIVO code in message'
             log.save(update_fields=['error_message'])
             return Response({'message': 'No valid code found.'})
@@ -129,7 +143,7 @@ def ycloud_webhook(request):
                 )
             except WhatsAppSession.DoesNotExist:
                 logger.warning(f'Verification code not found or already used: {code}')
-                _send_whatsapp(phone, retry_msg)
+                _send_retry(phone)
                 log.error_message = f'Code not found or already verified: {code}'
                 log.save(update_fields=['error_message'])
                 return Response({'message': 'Session not found.'})
