@@ -28,27 +28,41 @@ export function clearWhatsAppPref() {
 
 /**
  * After firing a deep link, verify the app actually opened.
- * If page goes hidden within 3s → app opened → pref stays.
- * If page stays visible → app not installed → clear pref so picker shows again.
+ *
+ * - Page never goes hidden within 3s → app not installed → clear pref.
+ * - Page goes hidden then returns quickly (<8s) → Play Store bounce → clear pref.
+ * - Page goes hidden and stays 8s+ → user was in the real app → pref stays.
  */
 function verifyAppOpened() {
-  let opened = false;
+  let hiddenAt: number | null = null;
 
   const handler = () => {
     if (document.visibilityState === "hidden") {
-      opened = true;
-      document.removeEventListener("visibilitychange", handler);
-      clearTimeout(timeout);
+      hiddenAt = Date.now();
+    } else if (document.visibilityState === "visible" && hiddenAt) {
+      const elapsed = Date.now() - hiddenAt;
+      if (elapsed < 8000) {
+        // Quick bounce back — Play Store or app didn't open properly
+        clearWhatsAppPref();
+      }
+      // If 8s+ passed, they were actually in WhatsApp — pref stays
+      cleanup();
     }
+  };
+
+  const cleanup = () => {
+    document.removeEventListener("visibilitychange", handler);
+    clearTimeout(timeout);
   };
 
   document.addEventListener("visibilitychange", handler);
 
   const timeout = setTimeout(() => {
-    document.removeEventListener("visibilitychange", handler);
-    if (!opened) {
+    // 3s passed and page never went hidden — app not installed
+    if (!hiddenAt) {
       clearWhatsAppPref();
     }
+    cleanup();
   }, 3000);
 }
 
@@ -63,13 +77,13 @@ function buildDeepLink(type: WhatsAppType, params: string): string {
   if (isIOS()) {
     return `whatsapp-smb://send?${params}`;
   }
+  // Android Business: intent with package targeting
   return `intent://send?${params}#Intent;package=com.whatsapp.w4b;end`;
 }
 
 /**
  * Open a specific WhatsApp app with a pre-filled share message.
  * Used for referral sharing (no phone number, just text).
- * Verifies the app opened — clears pref if it didn't.
  */
 export function openWhatsAppDirect(text: string, type: WhatsAppType) {
   const encoded = encodeURIComponent(text);
@@ -80,7 +94,6 @@ export function openWhatsAppDirect(text: string, type: WhatsAppType) {
 /**
  * Open WhatsApp to chat with a specific phone number.
  * Used for OTP/verification. Uses saved pref for direct deep link.
- * Verifies the app opened — clears pref if it didn't.
  */
 export function openWhatsAppChat(phone: string, text: string) {
   const pref = getWhatsAppPref();
