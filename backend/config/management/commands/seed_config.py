@@ -16,6 +16,10 @@ SEED_DATA = {
     'whatsapp_personal': ('https://wa.me/971545079577', 'WhatsApp personal deep link URL'),
     'whatsapp_business': ('https://wa.me/971545079577', 'WhatsApp Business deep link URL'),
     'inactive_nudge_days': ('7', 'Number of days of inactivity before sending nudge'),
+    'otp_msg': (
+        "Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}",
+        'Pre-filled OTP message sent to WhatsApp. {code} is replaced with the 6-digit code.',
+    ),
     'welcome_msg': (
         "Hey there! Thanks for verifying. Your Rivo account is now active and ready to go.\n\n"
         "You can now start helping your clients get their mortgages approved while securing your commissions.\n\n"

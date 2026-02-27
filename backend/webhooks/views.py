@@ -121,7 +121,9 @@ def ycloud_webhook(request):
                 created_at__gte=cutoff,
             ).order_by('-created_at').first()
             if pending:
-                msg = f'Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {pending.code}'
+                from config.models import AppConfig
+                otp_template = AppConfig.get_value('otp_msg', 'Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}')
+                msg = otp_template.replace('{code}', pending.code)
                 _send_whatsapp(phone, msg)
             else:
                 _send_whatsapp(phone, "We couldn't find your verification session. Please go back to the app and try again:\nhttps://partners.rivo.ae")

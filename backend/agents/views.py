@@ -49,7 +49,8 @@ def init_whatsapp(request):
         is_whatsapp_business=is_business,
     )
 
-    message = f'Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}'
+    otp_template = AppConfig.get_value('otp_msg', 'Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}')
+    message = otp_template.replace('{code}', code)
 
     if is_business:
         base_url = AppConfig.get_value('whatsapp_business', 'https://wa.me/971545079577')
