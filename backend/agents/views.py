@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+from urllib.parse import quote
 import requests as http_requests
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -48,14 +49,14 @@ def init_whatsapp(request):
         is_whatsapp_business=is_business,
     )
 
-    message = f'RIVO {code}'
+    message = f'➡️ Just hit SEND to complete your Rivo registration!\nMy activation code is: RIVO {code}'
 
     if is_business:
         base_url = AppConfig.get_value('whatsapp_business', 'https://wa.me/971545079577')
     else:
         base_url = AppConfig.get_value('whatsapp_personal', 'https://wa.me/971545079577')
 
-    whatsapp_url = f'{base_url}?text={message}'
+    whatsapp_url = f'{base_url}?text={quote(message)}'
 
     logger.info(f'WhatsApp session created: code={code}, referral={referral_code or "none"}')
 
