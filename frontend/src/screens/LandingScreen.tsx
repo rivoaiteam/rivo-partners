@@ -6,6 +6,8 @@ import { Activity, Users, Zap } from "lucide-react";
 import { useState, useEffect } from "react";
 import { initWhatsApp, resolveReferralCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { getWhatsAppPref } from "@/lib/whatsapp";
+import { WhatsAppShareSheet } from "@/components/ui/WhatsAppShareSheet";
 
 export default function LandingScreen() {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ export default function LandingScreen() {
   const [searchParams] = useSearchParams();
   const [referralName, setReferralName] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
     // If already authenticated, go to home
@@ -34,7 +37,7 @@ export default function LandingScreen() {
     }
   }, [searchParams]);
 
-  const handleGetStarted = async () => {
+  const proceedToWhatsApp = async () => {
     const referralCode = localStorage.getItem("rivo_referral_code") || "";
     try {
       const data = await initWhatsApp(referralCode, false);
@@ -46,8 +49,14 @@ export default function LandingScreen() {
     }
   };
 
-  const handleSignIn = async () => {
-    await handleGetStarted();
+  const handleGetStarted = () => {
+    if (getWhatsAppPref()) {
+      // Pref already saved (returning user) — go straight
+      proceedToWhatsApp();
+    } else {
+      // First time — ask which WhatsApp they use
+      setShowPicker(true);
+    }
   };
 
   return (
@@ -153,7 +162,7 @@ export default function LandingScreen() {
 
         <div className="text-center">
           <button
-            onClick={handleSignIn}
+            onClick={handleGetStarted}
             disabled={!agreedToTerms}
             className={`text-sm font-medium text-gray-400 hover:text-white transition-colors ${!agreedToTerms ? "opacity-50 pointer-events-none" : ""}`}
           >
@@ -161,6 +170,12 @@ export default function LandingScreen() {
           </button>
         </div>
       </div>
+
+      <WhatsAppShareSheet
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        onSelect={() => proceedToWhatsApp()}
+      />
     </div>
   );
 }

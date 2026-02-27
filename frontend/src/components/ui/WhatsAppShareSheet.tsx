@@ -4,13 +4,19 @@ import { openWhatsAppDirect, setWhatsAppPref, type WhatsAppType } from "@/lib/wh
 interface WhatsAppShareSheetProps {
   open: boolean;
   onClose: () => void;
-  text: string;
+  /** If provided, opens WhatsApp with this text after selection. */
+  text?: string;
+  /** Called after user picks an app (pref is already saved). */
+  onSelect?: (type: WhatsAppType) => void;
 }
 
-export function WhatsAppShareSheet({ open, onClose, text }: WhatsAppShareSheetProps) {
+export function WhatsAppShareSheet({ open, onClose, text, onSelect }: WhatsAppShareSheetProps) {
   const handleSelect = (type: WhatsAppType) => {
     setWhatsAppPref(type);
-    openWhatsAppDirect(text, type);
+    if (text) {
+      openWhatsAppDirect(text, type);
+    }
+    onSelect?.(type);
     onClose();
   };
 
@@ -33,8 +39,8 @@ export function WhatsAppShareSheet({ open, onClose, text }: WhatsAppShareSheetPr
             className="fixed bottom-0 left-0 right-0 bg-zinc-900 rounded-t-2xl z-50 p-6 pb-10"
           >
             <div className="w-12 h-1 bg-zinc-700 rounded-full mx-auto mb-6" />
-            <h3 className="text-lg font-medium text-white mb-1">Share via WhatsApp</h3>
-            <p className="text-sm text-gray-400 mb-6">Choose which WhatsApp to open</p>
+            <h3 className="text-lg font-medium text-white mb-1">Choose your WhatsApp</h3>
+            <p className="text-sm text-gray-400 mb-6">This will be remembered for future use</p>
 
             <div className="space-y-3">
               <button
