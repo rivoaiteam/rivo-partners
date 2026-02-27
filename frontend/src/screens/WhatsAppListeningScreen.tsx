@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { useAuth } from "@/lib/auth";
 import { ArrowLeft } from "lucide-react";
 import { checkVerification, initWhatsApp } from "@/lib/api";
-import { openWhatsAppChat } from "@/lib/whatsapp";
+import { openWhatsAppChat, getWhatsAppPref } from "@/lib/whatsapp";
 
 export default function WhatsAppListeningScreen() {
   const navigate = useNavigate();
@@ -50,6 +50,33 @@ export default function WhatsAppListeningScreen() {
       }
     }
   }, []);
+
+  // If the app didn't open (verifyAppOpened cleared the pref), go back so user can re-pick
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        // Small delay to let verifyAppOpened finish clearing pref
+        setTimeout(() => {
+          if (!getWhatsAppPref()) {
+            navigate("/", { replace: true });
+          }
+        }, 200);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    // Also check after 4s in case page never went hidden (app not installed at all)
+    const fallback = setTimeout(() => {
+      if (!getWhatsAppPref()) {
+        navigate("/", { replace: true });
+      }
+    }, 4000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearTimeout(fallback);
+    };
+  }, [navigate]);
 
   const handleVerified = (data: { token: string; agent: { has_completed_first_action: boolean } }) => {
     loginWithToken(data.token, data.agent);
