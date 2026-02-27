@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from agents.models import Agent, WhatsAppSession
-from agents.services import generate_device_token, send_referral_signup_notification, send_verification_reply, _send_whatsapp
+from agents.services import generate_device_token, send_client_status_update_notification, send_referral_signup_notification, send_verification_reply, _send_whatsapp
 from clients.models import Client
 from webhooks.models import WebhookLog
 from referrals.services import process_disbursal_bonuses
@@ -67,6 +67,13 @@ def crm_status_webhook(request):
     client.save()
 
     logger.info(f'Client {client.client_name} status updated: {old_status} → {pipeline_status}')
+
+    # Notify the source agent about the status change
+    if old_status != pipeline_status and client.source_agent:
+        try:
+            send_client_status_update_notification(client.source_agent, client.client_name, pipeline_status)
+        except Exception as e:
+            logger.warning(f'Failed to send status update notification to {client.source_agent.phone}: {e}')
 
     if pipeline_status == 'DISBURSED' and old_status != 'DISBURSED':
         logger.info(f'Processing disbursal bonuses for client {client.client_name}')

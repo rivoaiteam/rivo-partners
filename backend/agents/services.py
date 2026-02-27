@@ -100,6 +100,24 @@ def send_referral_bonus_notification(referrer, agent, bonus_amount, deal_number)
     return _send_whatsapp_template(referrer.phone, 'referral_bonus_msg', [bonus_amount, agent_name, deal_number])
 
 
+def send_client_status_update_notification(agent, client_name, new_status):
+    """Notify the source agent when their referred client's status changes.
+    Template: referrer_status_update_1 — {{1}} = agent_name, {{2}} = client_name, {{3}} = status"""
+    STATUS_LABELS = {
+        'SUBMITTED': 'submitted',
+        'CONTACTED': 'now being contacted by Rivo',
+        'QUALIFIED': 'qualified for a mortgage',
+        'SUBMITTED_TO_BANK': 'now submitted to the bank',
+        'PREAPPROVED': 'now pre-approved by the bank',
+        'FOL_RECEIVED': 'now at the offer letter stage',
+        'DISBURSED': 'now disbursed',
+        'DECLINED': 'declined',
+    }
+    agent_name = agent.name or 'Partner'
+    status_label = STATUS_LABELS.get(new_status, new_status)
+    return _send_whatsapp_template(agent.phone, 'referrer_status_update_1', [agent_name, client_name, status_label])
+
+
 def send_inactive_nudge(agent):
     """Send nudge to agent who hasn't referred in X days via YCloud template.
     Template: inactive_nudge_msg — {{1}} = agent_name"""
