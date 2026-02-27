@@ -110,7 +110,7 @@ def ycloud_webhook(request):
         # Extract verification code from message: RIVO 123456
         match = re.search(r'RIVO\s*(\d{6})', text.upper())
         phone = from_phone if from_phone.startswith('+') else f'+{from_phone}' if from_phone else ''
-        retry_msg = "We couldn't verify your code. Please go back to the app and try again:\nhttps://partners.rivo.ae"
+        retry_msg = "We couldn't verify your code. Please send the correct code again."
 
         if not match and from_phone:
             logger.warning(f'No valid code found in message from {from_phone}: {text[:50]}')
