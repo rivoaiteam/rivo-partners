@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from agents.models import Agent, WhatsAppSession
-from agents.services import generate_device_token, send_referral_signup_notification, send_verification_reply
+from agents.services import generate_device_token, send_referral_signup_notification, send_verification_reply, _send_whatsapp
 from clients.models import Client
 from webhooks.models import WebhookLog
 from referrals.services import process_disbursal_bonuses
@@ -109,6 +109,16 @@ def ycloud_webhook(request):
 
         # Extract verification code from message: RIVO 123456
         match = re.search(r'RIVO\s*(\d{6})', text.upper())
+        phone = from_phone if from_phone.startswith('+') else f'+{from_phone}' if from_phone else ''
+        retry_msg = "We couldn't verify your code. Please go back to the app and try again:\nhttps://partners.rivo.ae"
+
+        if not match and from_phone:
+            logger.warning(f'No valid code found in message from {from_phone}: {text[:50]}')
+            _send_whatsapp(phone, retry_msg)
+            log.error_message = 'No valid RIVO code in message'
+            log.save(update_fields=['error_message'])
+            return Response({'message': 'No valid code found.'})
+
         if match and from_phone:
             code = match.group(1)
 
@@ -119,12 +129,10 @@ def ycloud_webhook(request):
                 )
             except WhatsAppSession.DoesNotExist:
                 logger.warning(f'Verification code not found or already used: {code}')
+                _send_whatsapp(phone, retry_msg)
                 log.error_message = f'Code not found or already verified: {code}'
                 log.save(update_fields=['error_message'])
                 return Response({'message': 'Session not found.'})
-
-            # Normalize phone — ensure it has + prefix
-            phone = from_phone if from_phone.startswith('+') else f'+{from_phone}'
 
             # Find or create agent by phone
             agent, created = Agent.objects.get_or_create(
