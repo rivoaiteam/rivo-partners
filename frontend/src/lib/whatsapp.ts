@@ -95,6 +95,29 @@ export function openWhatsAppDirect(text: string, type: WhatsAppType) {
  * Open WhatsApp to chat with a specific phone number.
  * Used for OTP/verification. Uses saved pref for direct deep link.
  */
+/**
+ * Open the native share sheet (iOS/Android).
+ * Falls back to copying text to clipboard if not supported.
+ * Returns true if share succeeded, false if copied to clipboard.
+ */
+export async function nativeShare(text: string, url?: string): Promise<boolean> {
+  if (navigator.share) {
+    try {
+      await navigator.share({ text, url });
+      return true;
+    } catch {
+      // User cancelled or error — fall through to clipboard
+    }
+  }
+  // Fallback: copy to clipboard
+  try {
+    await navigator.clipboard.writeText(url ? `${text}\n${url}` : text);
+  } catch {
+    // Clipboard API not available
+  }
+  return false;
+}
+
 export function openWhatsAppChat(phone: string, text: string) {
   const pref = getWhatsAppPref();
   const encoded = encodeURIComponent(text);

@@ -37,11 +37,13 @@ export default function LandingScreen() {
     }
   }, [searchParams]);
 
+  // Track if user already had a pref BEFORE the picker opened
+  const [wasReturningUser] = useState(() => !!getWhatsAppPref());
+
   const proceedToWhatsApp = async () => {
-    const isReturningUser = !!getWhatsAppPref();
-    const referralCode = isReturningUser ? "" : localStorage.getItem("rivo_referral_code") || "";
+    const referralCode = wasReturningUser ? "" : localStorage.getItem("rivo_referral_code") || "";
     try {
-      const data = await initWhatsApp(referralCode, false, isReturningUser);
+      const data = await initWhatsApp(referralCode, false, wasReturningUser);
       localStorage.setItem("rivo_verify_code", data.code);
       localStorage.setItem("rivo_wa_pending", data.whatsapp_url);
       navigate("/whatsapp-verify");

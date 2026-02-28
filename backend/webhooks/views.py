@@ -174,6 +174,9 @@ def ycloud_webhook(request):
             else:
                 logger.info(f'Existing agent verified: {phone}')
 
+            # Check if this is a genuinely returning active user (before any reactivation)
+            is_returning_user = not created and agent.is_active
+
             # Reactivate if previously deleted — reset profile data
             if not created and not agent.is_active:
                 agent.is_active = True
@@ -211,7 +214,6 @@ def ycloud_webhook(request):
             session.save()
 
             # Send WhatsApp reply with link back to the app
-            is_returning_user = not created and agent.is_active
             try:
                 send_verification_reply(phone, code, is_returning_user=is_returning_user)
             except Exception as e:
