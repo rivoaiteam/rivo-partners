@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         <img
           src="/rivo-logo.png"
           alt="Rivo"
-          className="w-48 invert"
+          className="w-48"
         />
       </div>
     );
