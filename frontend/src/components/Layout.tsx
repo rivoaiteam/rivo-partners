@@ -1,8 +1,10 @@
+import React, { Suspense } from "react";
 import { Outlet, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { Home, Briefcase, Users, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import InstallPrompt from "@/components/InstallPrompt";
+
+const InstallPrompt = React.lazy(() => import("@/components/InstallPrompt"));
 
 export default function Layout() {
   const { isAuthenticated } = useAuth();
@@ -27,7 +29,7 @@ export default function Layout() {
           </nav>
         )}
 
-        <InstallPrompt hasNav={!hideNav} />
+        <Suspense><InstallPrompt hasNav={!hideNav} /></Suspense>
       </div>
     </div>
   );
