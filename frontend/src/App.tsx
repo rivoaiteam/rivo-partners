@@ -33,7 +33,7 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
       <BrowserRouter>
-        <Suspense fallback={<div style={{minHeight:'100vh',background:'#000'}} />}>
+        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center"><div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>}>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<LandingScreen />} />
