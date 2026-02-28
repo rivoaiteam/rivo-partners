@@ -152,7 +152,7 @@ export default function WhatsAppListeningScreen() {
   if (isFromVerifyLink) {
     return (
       <div className="flex flex-col min-h-screen bg-black items-center justify-center">
-        <div className="w-8 h-8 border-2 border-rivo-green border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
         <p className="text-gray-400 mt-4 text-sm">Verifying...</p>
       </div>
     );
