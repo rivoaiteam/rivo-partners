@@ -78,7 +78,7 @@ def check_verification(request, code):
     Returns verified=false until YCloud webhook processes the message.
     Once verified, returns agent data and auth token."""
     try:
-        session = WhatsAppSession.objects.get(code=code)
+        session = WhatsAppSession.objects.select_related('agent').get(code=code)
     except WhatsAppSession.DoesNotExist:
         return Response({'error': 'Invalid code.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -116,25 +116,34 @@ def update_profile(request):
 @permission_classes([IsAuthenticated])
 def network(request):
     """Get agent's referral network — referred agents and bonus status."""
-    agent = request.user
-    referred_agents = agent.referred_agents.all()
+    from django.db.models import Count, Q, Sum
 
-    bonuses = ReferralBonus.objects.filter(referrer=agent)
-    total_bonuses_earned = sum(b.amount for b in bonuses)
+    agent = request.user
+    referred_agents = agent.referred_agents.annotate(
+        deals_count=Count('clients', filter=Q(clients__status='DISBURSED'))
+    )
+
+    bonuses = ReferralBonus.objects.filter(referrer=agent).select_related('triggered_by_agent')
+    total_bonuses_earned = bonuses.aggregate(total=Sum('amount'))['total'] or 0
+    bonuses_count = bonuses.count()
     bonus_config = AppConfig.get_value('referrer_bonuses', [500, 500, 1000])
     max_bonuses = len(bonus_config)
-    bonuses_completed = bonuses.count() >= max_bonuses
+
+    # Pre-compute bonus per agent to avoid N+1
+    bonus_by_agent = {}
+    for b in bonuses:
+        bonus_by_agent[b.triggered_by_agent_id] = bonus_by_agent.get(b.triggered_by_agent_id, 0) + b.amount
 
     return Response({
         'agent_code': agent.agent_code,
         'referred_agents': NetworkAgentSerializer(
-            referred_agents, many=True, context={'referrer': agent}
+            referred_agents, many=True, context={'bonus_by_agent': bonus_by_agent}
         ).data,
         'bonus_summary': {
             'total_earned': total_bonuses_earned,
-            'bonuses_count': bonuses.count(),
+            'bonuses_count': bonuses_count,
             'max_bonuses': max_bonuses,
-            'completed': bonuses_completed,
+            'completed': bonuses_count >= max_bonuses,
             'bonuses': ReferralBonusSerializer(bonuses, many=True).data,
         },
     })

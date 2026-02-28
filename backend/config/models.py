@@ -18,16 +18,35 @@ class AppConfig(models.Model):
 
     @classmethod
     def get_value(cls, key, default=None):
+        from django.core.cache import cache
+        cache_key = f'appconfig:{key}'
+        value = cache.get(cache_key)
+        if value is not None:
+            return value
         try:
             config = cls.objects.get(key=key)
-            return cls._parse_value(config.value)
+            value = cls._parse_value(config.value)
+            cache.set(cache_key, value, 3600)
+            return value
         except cls.DoesNotExist:
             return default
 
     @classmethod
     def get_all_config(cls):
-        configs = cls.objects.all()
-        return {c.key: cls._parse_value(c.value) for c in configs}
+        from django.core.cache import cache
+        cache_key = 'appconfig:all'
+        configs = cache.get(cache_key)
+        if configs is not None:
+            return configs
+        configs = {c.key: cls._parse_value(c.value) for c in cls.objects.all()}
+        cache.set(cache_key, configs, 3600)
+        return configs
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from django.core.cache import cache
+        cache.delete(f'appconfig:{self.key}')
+        cache.delete('appconfig:all')
 
     @staticmethod
     def _parse_value(value):

@@ -57,15 +57,21 @@ class Agent(models.Model):
 
     @property
     def total_earned(self):
-        disbursed = self.clients.filter(status='DISBURSED')
-        total = sum(c.commission_amount or 0 for c in disbursed)
-        total += self.referral_bonuses_earned
-        return total
+        from django.db.models import Sum
+        client_total = self.clients.filter(status='DISBURSED').aggregate(
+            total=Sum('commission_amount')
+        )['total'] or 0
+        bonus_total = self.referral_bonuses.aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        return client_total + bonus_total
 
     @property
     def pending_amount(self):
-        active = self.clients.filter(status__in=['PREAPPROVED', 'FOL_RECEIVED'])
-        return sum(c.estimated_commission or 0 for c in active)
+        from django.db.models import Sum
+        return self.clients.filter(
+            status__in=['PREAPPROVED', 'FOL_RECEIVED']
+        ).aggregate(total=Sum('estimated_commission'))['total'] or 0
 
     @property
     def disbursed_count(self):
@@ -74,29 +80,13 @@ class Agent(models.Model):
     @property
     def this_month_earned(self):
         from django.utils import timezone
+        from django.db.models import Sum
         now = timezone.now()
-        disbursed = self.clients.filter(
+        return self.clients.filter(
             status='DISBURSED',
             updated_at__year=now.year,
             updated_at__month=now.month,
-        )
-        return sum(c.commission_amount or 0 for c in disbursed)
-
-    @property
-    def referral_bonuses_earned(self):
-        from referrals.models import ReferralBonus
-        bonuses = ReferralBonus.objects.filter(referrer=self)
-        return sum(b.amount for b in bonuses)
-
-    @property
-    def network_disbursal_count(self):
-        """Total disbursals across all referred agents."""
-        from clients.models import Client
-        referred_agent_ids = self.referred_agents.values_list('id', flat=True)
-        return Client.objects.filter(
-            source_agent_id__in=referred_agent_ids,
-            status='DISBURSED'
-        ).count()
+        ).aggregate(total=Sum('commission_amount'))['total'] or 0
 
 
 class WhatsAppSession(models.Model):
@@ -116,6 +106,9 @@ class WhatsAppSession(models.Model):
 
     class Meta:
         db_table = 'whatsapp_sessions'
+        indexes = [
+            models.Index(fields=['is_verified', '-created_at']),
+        ]
 
     def __str__(self):
         return f'Code {self.code} - verified={self.is_verified}'

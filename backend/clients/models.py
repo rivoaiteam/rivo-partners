@@ -26,7 +26,7 @@ class Client(models.Model):
         'agents.Agent', null=True, blank=True, on_delete=models.SET_NULL, related_name='clients'
     )
     channel = models.CharField(max_length=50, default='PARTNER_PWA')
-    crm_lead_id = models.UUIDField(blank=True, null=True, help_text='Lead ID from Rivo CRM')
+    crm_lead_id = models.UUIDField(blank=True, null=True, db_index=True, help_text='Lead ID from Rivo CRM')
     consent_given = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -34,6 +34,10 @@ class Client(models.Model):
     class Meta:
         db_table = 'clients'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['source_agent', 'status']),
+        ]
 
     def __str__(self):
         return f'{self.client_name} - {self.status}'

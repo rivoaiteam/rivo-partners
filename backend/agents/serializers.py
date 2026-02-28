@@ -28,24 +28,13 @@ class AgentProfileUpdateSerializer(serializers.ModelSerializer):
 
 class NetworkAgentSerializer(serializers.ModelSerializer):
     """Serializer for agents in the referrer's network."""
-    deals_count = serializers.SerializerMethodField()
+    deals_count = serializers.IntegerField(read_only=True, default=0)
     bonus_earned = serializers.SerializerMethodField()
 
     class Meta:
         model = Agent
         fields = ['id', 'name', 'agent_code', 'created_at', 'deals_count', 'bonus_earned']
 
-    def get_deals_count(self, obj):
-        return obj.clients.filter(status='DISBURSED').count()
-
     def get_bonus_earned(self, obj):
-        """Bonus earned by the referrer from this specific agent's deals."""
-        from referrals.models import ReferralBonus
-        referrer = self.context.get('referrer')
-        if not referrer:
-            return 0
-        bonuses = ReferralBonus.objects.filter(
-            referrer=referrer,
-            triggered_by_agent=obj
-        )
-        return sum(b.amount for b in bonuses)
+        bonus_map = self.context.get('bonus_by_agent', {})
+        return bonus_map.get(obj.id, 0)
