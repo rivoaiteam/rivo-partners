@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { CONFIG, loadConfig } from "@/config";
 import { useAuth } from "@/lib/auth";
 import { motion } from "motion/react";
-import { Copy, Users } from "lucide-react";
+import { Copy, Share2, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getNetwork } from "@/lib/api";
@@ -77,6 +77,7 @@ export default function NetworkScreen() {
             className="w-full h-14 font-medium rounded-lg mb-4 text-lg"
             onClick={handleShare}
           >
+            <Share2 className="w-5 h-5 mr-2" />
             Invite your network
           </Button>
 

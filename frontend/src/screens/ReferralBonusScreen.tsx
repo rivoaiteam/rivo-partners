@@ -3,7 +3,7 @@ import { CONFIG, loadConfig } from "@/config";
 import { useAuth } from "@/lib/auth";
 import { motion } from "motion/react";
 import { useNavigate, Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { X, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { nativeShare } from "@/lib/whatsapp";
 
@@ -84,6 +84,7 @@ export default function ReferralBonusScreen() {
           className="w-full h-14 text-lg font-medium bg-white text-black hover:bg-gray-200 rounded-lg"
           onClick={handleShare}
         >
+          <Share2 className="w-5 h-5 mr-2" />
           Share your link
         </Button>
 

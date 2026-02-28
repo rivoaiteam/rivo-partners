@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft, Users, Zap, Briefcase } from "lucide-react";
+import { ArrowLeft, Users, Zap, Briefcase, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { CONFIG, loadConfig } from "@/config";
@@ -105,6 +105,7 @@ export default function ReferralInfoScreen() {
             className="w-full h-14 text-lg font-bold"
             onClick={handleShare}
           >
+            <Share2 className="w-5 h-5 mr-2" />
             Refer now
           </Button>
         </div>
