@@ -92,7 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-black" />;
+    // Match the inline HTML splash exactly so there's no visual gap
+    return (
+      <div style={{minHeight:'100vh',background:'#000',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <img src="/rivo-logo.png" alt="" style={{width:'12rem'}} />
+      </div>
+    );
   }
 
   return (
