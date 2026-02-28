@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { getMe, logoutAgent } from "./api";
 
 export interface User {
@@ -37,6 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return cached ? JSON.parse(cached) : null;
   });
   const [loading, setLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+  const splashStart = useRef(Date.now());
 
   useEffect(() => {
     const token = localStorage.getItem("rivo_token");
@@ -54,9 +56,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.removeItem("rivo_user");
           }
         })
-        .finally(() => setLoading(false));
+        .finally(() => {
+          // Ensure splash shows for at least 2 seconds
+          const elapsed = Date.now() - splashStart.current;
+          const remaining = Math.max(0, 2000 - elapsed);
+          setTimeout(() => setLoading(false), remaining);
+        });
     } else {
-      setLoading(false);
+      const elapsed = Date.now() - splashStart.current;
+      const remaining = Math.max(0, 2000 - elapsed);
+      setTimeout(() => setLoading(false), remaining);
     }
   }, []);
 
@@ -93,8 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-rivo-bg flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-rivo-green border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <img
+          src="/rivo-logo.png"
+          alt="Rivo"
+          className="w-48 invert"
+        />
       </div>
     );
   }
