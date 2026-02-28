@@ -41,7 +41,7 @@ export default function LandingScreen() {
   const [wasReturningUser] = useState(() => !!getWhatsAppPref());
 
   const proceedToWhatsApp = async () => {
-    const referralCode = wasReturningUser ? "" : localStorage.getItem("rivo_referral_code") || "";
+    const referralCode = localStorage.getItem("rivo_referral_code") || "";
     try {
       const data = await initWhatsApp(referralCode, false, wasReturningUser);
       localStorage.setItem("rivo_verify_code", data.code);

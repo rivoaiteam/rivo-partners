@@ -3,6 +3,7 @@ import re
 from decimal import Decimal
 from urllib.parse import quote
 from django.conf import settings
+from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -61,8 +62,10 @@ def crm_status_webhook(request):
         client.expected_mortgage_amount = Decimal(str(mortgage_amount))
         client.estimated_commission = None  # recalculate on save
 
-    if pipeline_status == 'DISBURSED' and mortgage_amount:
-        client.commission_amount = Decimal(str(mortgage_amount))
+    if pipeline_status == 'DISBURSED' and client.expected_mortgage_amount:
+        from config.models import AppConfig
+        rate = AppConfig.get_value('commission_min_percent', 0.45)
+        client.commission_amount = client.expected_mortgage_amount * Decimal(str(rate)) / 100
 
     client.save()
 
@@ -160,58 +163,59 @@ def ycloud_webhook(request):
                 log.save(update_fields=['error_message'])
                 return Response({'message': 'Session not found.'})
 
-            # Find or create agent by phone
-            agent, created = Agent.objects.get_or_create(
-                phone=phone,
-                defaults={
-                    'name': wa_profile_name,
-                    'is_whatsapp_business': session.is_whatsapp_business,
-                },
-            )
+            with transaction.atomic():
+                # Find or create agent by phone
+                agent, created = Agent.objects.get_or_create(
+                    phone=phone,
+                    defaults={
+                        'name': wa_profile_name,
+                        'is_whatsapp_business': session.is_whatsapp_business,
+                    },
+                )
 
-            if created:
-                logger.info(f'New agent created: {phone}')
-            else:
-                logger.info(f'Existing agent verified: {phone}')
+                if created:
+                    logger.info(f'New agent created: {phone}')
+                else:
+                    logger.info(f'Existing agent verified: {phone}')
 
-            # Check if this is a genuinely returning active user (before any reactivation)
-            is_returning_user = not created and agent.is_active
+                # Check if this is a genuinely returning active user (before any reactivation)
+                is_returning_user = not created and agent.is_active
 
-            # Reactivate if previously deleted — reset profile data
-            if not created and not agent.is_active:
-                agent.is_active = True
-                agent.name = wa_profile_name
-                agent.email = ''
-                agent.agent_type = ''
-                agent.agent_type_other = ''
-                agent.rera_number = ''
-                agent.referred_by = None
-                agent.is_profile_complete = False
-                agent.has_completed_first_action = False
-                agent.save()
-                logger.info(f'Agent reactivated: {phone}')
+                # Reactivate if previously deleted — reset profile data
+                if not created and not agent.is_active:
+                    agent.is_active = True
+                    agent.name = wa_profile_name
+                    agent.email = ''
+                    agent.agent_type = ''
+                    agent.agent_type_other = ''
+                    agent.rera_number = ''
+                    agent.referred_by = None
+                    agent.is_profile_complete = False
+                    agent.has_completed_first_action = False
+                    agent.save()
+                    logger.info(f'Agent reactivated: {phone}')
 
-            # Handle referral code for new or reactivated agents
-            if session.referral_code and not agent.referred_by:
-                try:
-                    referrer = Agent.objects.get(agent_code=session.referral_code)
-                    agent.referred_by = referrer
-                    agent.save(update_fields=['referred_by'])
-                    logger.info(f'Agent {phone} referred by {referrer.phone} (code: {session.referral_code})')
-                    send_referral_signup_notification(referrer, agent)
-                except Agent.DoesNotExist:
-                    logger.warning(f'Referral code not found: {session.referral_code}')
+                # Handle referral code for new or reactivated agents
+                if session.referral_code and not agent.referred_by:
+                    try:
+                        referrer = Agent.objects.get(agent_code=session.referral_code)
+                        agent.referred_by = referrer
+                        agent.save(update_fields=['referred_by'])
+                        logger.info(f'Agent {phone} referred by {referrer.phone} (code: {session.referral_code})')
+                        send_referral_signup_notification(referrer, agent)
+                    except Agent.DoesNotExist:
+                        logger.warning(f'Referral code not found: {session.referral_code}')
 
-            # Generate device token and mark session verified
-            device_token = generate_device_token()
-            agent.device_token = device_token
-            agent.save(update_fields=['device_token'])
+                # Generate device token and mark session verified
+                device_token = generate_device_token()
+                agent.device_token = device_token
+                agent.save(update_fields=['device_token'])
 
-            session.phone = phone
-            session.agent = agent
-            session.device_token = device_token
-            session.is_verified = True
-            session.save()
+                session.phone = phone
+                session.agent = agent
+                session.device_token = device_token
+                session.is_verified = True
+                session.save()
 
             # Send WhatsApp reply with link back to the app
             try:

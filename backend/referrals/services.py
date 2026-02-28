@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from django.db import transaction
 from config.models import AppConfig
 from agents.services import send_referral_bonus_notification
 from referrals.models import ReferralBonus, NewAgentBonus
@@ -22,10 +23,12 @@ def process_disbursal_bonuses(client):
         _process_referrer_bonus(agent.referred_by, agent, client)
 
 
+@transaction.atomic
 def _process_new_agent_bonus(agent, client):
     """Award bonus to agent for their first N disbursed deals."""
     bonus_config = AppConfig.get_value('new_agent_bonuses', [1000, 750, 500])
-    existing_count = NewAgentBonus.objects.filter(agent=agent).count()
+    # Lock existing rows to prevent race condition
+    existing_count = NewAgentBonus.objects.select_for_update().filter(agent=agent).count()
     if existing_count >= len(bonus_config):
         logger.info(f'New agent bonus skipped: agent={agent.phone} already has {existing_count}/{len(bonus_config)} bonuses')
         return
@@ -42,10 +45,12 @@ def _process_new_agent_bonus(agent, client):
         logger.info(f'New agent bonus awarded: agent={agent.phone}, deal #{deal_number}, amount={amount}')
 
 
+@transaction.atomic
 def _process_referrer_bonus(referrer, triggered_by_agent, client):
     """Award bonus to referrer on first N disbursals across their ENTIRE network."""
     bonus_config = AppConfig.get_value('referrer_bonuses', [500, 500, 1000])
-    existing_count = ReferralBonus.objects.filter(referrer=referrer).count()
+    # Lock existing rows to prevent race condition
+    existing_count = ReferralBonus.objects.select_for_update().filter(referrer=referrer).count()
     if existing_count >= len(bonus_config):
         logger.info(f'Referrer bonus skipped: referrer={referrer.phone} already has {existing_count}/{len(bonus_config)} bonuses')
         return
