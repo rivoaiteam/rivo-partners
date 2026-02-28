@@ -18,11 +18,6 @@ function isInStandaloneMode(): boolean {
   );
 }
 
-function isIOSSafari(): boolean {
-  const ua = navigator.userAgent;
-  return isIOS() && /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
-}
-
 const DISMISSED_KEY = "rivo_install_dismissed";
 
 export default function InstallPrompt({ hasNav = false }: { hasNav?: boolean }) {
@@ -34,7 +29,7 @@ export default function InstallPrompt({ hasNav = false }: { hasNav?: boolean }) 
     if (isInStandaloneMode()) return;
     if (sessionStorage.getItem(DISMISSED_KEY)) return;
 
-    if (isIOSSafari()) {
+    if (isIOS()) {
       setShowIOS(true);
       return;
     }
