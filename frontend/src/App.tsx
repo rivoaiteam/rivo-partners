@@ -1,23 +1,23 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ToastProvider } from "@/components/ui/Toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import Layout from "@/components/Layout";
-import LandingScreen from "@/screens/LandingScreen";
-import ReferralBonusScreen from "@/screens/ReferralBonusScreen";
-import HomeScreen from "@/screens/HomeScreen";
-import ClientsScreen from "@/screens/ClientsScreen";
-import NetworkScreen from "@/screens/NetworkScreen";
-import ProfileScreen from "@/screens/ProfileScreen";
-import LeadSubmissionScreen from "@/screens/LeadSubmissionScreen";
-import ReferralSuccessScreen from "@/screens/ReferralSuccessScreen";
-import WhatsAppListeningScreen from "@/screens/WhatsAppListeningScreen";
-import ReferralInfoScreen from "@/screens/ReferralInfoScreen";
 
-import TermsScreen from "@/screens/TermsScreen";
-import PrivacyScreen from "@/screens/PrivacyScreen";
-import BonusTermsScreen from "@/screens/BonusTermsScreen";
+const LandingScreen = React.lazy(() => import("@/screens/LandingScreen"));
+const ReferralBonusScreen = React.lazy(() => import("@/screens/ReferralBonusScreen"));
+const HomeScreen = React.lazy(() => import("@/screens/HomeScreen"));
+const ClientsScreen = React.lazy(() => import("@/screens/ClientsScreen"));
+const NetworkScreen = React.lazy(() => import("@/screens/NetworkScreen"));
+const ProfileScreen = React.lazy(() => import("@/screens/ProfileScreen"));
+const LeadSubmissionScreen = React.lazy(() => import("@/screens/LeadSubmissionScreen"));
+const ReferralSuccessScreen = React.lazy(() => import("@/screens/ReferralSuccessScreen"));
+const WhatsAppListeningScreen = React.lazy(() => import("@/screens/WhatsAppListeningScreen"));
+const ReferralInfoScreen = React.lazy(() => import("@/screens/ReferralInfoScreen"));
+const TermsScreen = React.lazy(() => import("@/screens/TermsScreen"));
+const PrivacyScreen = React.lazy(() => import("@/screens/PrivacyScreen"));
+const BonusTermsScreen = React.lazy(() => import("@/screens/BonusTermsScreen"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -33,6 +33,7 @@ export default function App() {
     <AuthProvider>
       <ToastProvider>
       <BrowserRouter>
+        <Suspense fallback={<div style={{minHeight:'100vh',background:'#000'}} />}>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<LandingScreen />} />
@@ -99,6 +100,7 @@ export default function App() {
             />
           </Route>
         </Routes>
+        </Suspense>
       </BrowserRouter>
       </ToastProvider>
     </AuthProvider>
