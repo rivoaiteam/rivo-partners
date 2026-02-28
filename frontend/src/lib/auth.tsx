@@ -91,14 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Hide the HTML splash once the app is ready
-  useEffect(() => {
-    if (!loading) {
-      const splash = document.getElementById('splash');
-      if (splash) splash.remove();
-    }
-  }, [loading]);
-
   if (loading) {
     return null;
   }
